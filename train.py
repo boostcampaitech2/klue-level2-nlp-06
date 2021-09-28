@@ -116,11 +116,14 @@ def train():
     print(device)
     # setting model hyperparameter
     model_config = AutoConfig.from_pretrained(MODEL_NAME)
-    model_config.num_labels = 30
+    
+    for c, val in cfg['model']['config'].items():
+        setattr(model_config, c, val)
 
     model = AutoModelForSequenceClassification.from_pretrained(
         MODEL_NAME, config=model_config)
     print(model.config)
+
     model.parameters
     model.to(device)
 
@@ -138,12 +141,18 @@ def train():
 
     # train model
     trainer.train()
-    model.save_pretrained('./best_model')
+    model.save_pretrained('./best_model/' + cfg['wandb']['name'])
     wandb.finish()
 
 
 def main():
-    wandb.init(project='klue-RE', name="BERT_BASE",tags=["BERT_BASE", "model", "base_line"], group="BERT-BASE", entity='boostcamp-nlp-06')
+
+    # append result output directory
+    output_dir = cfg['TrainingArguments']['output_dir']
+    exp_name = cfg['wandb']['name']
+    cfg['TrainingArguments']['output_dir'] = output_dir + "/" + exp_name    
+
+    wandb.init(project='klue-RE', name=cfg['wandb']['name'],tags=cfg['wandb']['tags'], group=cfg['wandb']['group'], entity='boostcamp-nlp-06')
     train()
 
 

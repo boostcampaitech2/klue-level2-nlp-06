@@ -1,4 +1,10 @@
   {
+    "wandb":{
+      "name" : "layer_3",
+      "tags" : ["BERT_BASE", "model", "base_line"], 
+      "group" : "BERT-BASE"
+    },
+
     "TrainingArguments" : {
         "output_dir":"./results",          
         "save_total_limit":5,              
@@ -13,9 +19,14 @@
         "logging_steps":100,              
         "evaluation_strategy":"steps", 
         "eval_steps" : 500,            
-        "load_best_model_at_end" : false 
+        "load_best_model_at_end" : true 
     },
+
     "model" :{
-      "huggingface": "klue/bert-base"
+      "huggingface": "klue/bert-base",
+      "config":{
+        "num_hidden_layers" : 3,
+        "num_labels" : 30
+      }
     }
   }

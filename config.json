@@ -1,0 +1,21 @@
+  {
+    "TrainingArguments" : {
+        "output_dir":"./results",          
+        "save_total_limit":5,              
+        "save_steps":500,                 
+        "num_train_epochs":20,              
+        "learning_rate":5e-5,               
+        "per_device_train_batch_size":100,  
+        "per_device_eval_batch_size":100,   
+        "warmup_steps":500,                
+        "weight_decay":0.01,               
+        "logging_dir":"./logs",            
+        "logging_steps":100,              
+        "evaluation_strategy":"steps", 
+        "eval_steps" : 500,            
+        "load_best_model_at_end" : false 
+    },
+    "model" :{
+      "huggingface": "klue/bert-base"
+    }
+  }

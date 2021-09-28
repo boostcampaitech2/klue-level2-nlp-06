@@ -2,7 +2,7 @@ import pickle as pickle
 import os
 import pandas as pd
 import torch
-
+from sklearn.model_selection import StratifiedShuffleSplit
 
 class RE_Dataset(torch.utils.data.Dataset):
   """ Dataset 구성을 위한 class."""
@@ -55,3 +55,17 @@ def tokenized_dataset(dataset, tokenizer):
       add_special_tokens=True,
       )
   return tokenized_sentences
+
+def load_stratified_data(dataset_dir):
+  """ csv 파일을 경로에 맡게 불러 옵니다. """  
+  split = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
+  pd_dataset = pd.read_csv(dataset_dir)  
+  
+  for train_index, test_index in split.split(pd_dataset, pd_dataset["label"]):
+    strat_train_set = pd_dataset.loc[train_index]
+    strat_dev_set = pd_dataset.loc[test_index]
+  train_dataset = preprocessing_dataset(strat_train_set)  
+  dev_dataset = preprocessing_dataset(strat_dev_set)  
+  return train_dataset, dev_dataset
+
+

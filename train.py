@@ -65,6 +65,13 @@ def compute_metrics(pred):
     auprc = klue_re_auprc(probs, labels)
     acc = accuracy_score(labels, preds)  # 리더보드 평가에는 포함되지 않습니다.
 
+    class_names = np.arange(30)
+
+    wandb.log({"conf_mat" : wandb.plot.confusion_matrix(probs=None, \
+                            y_true=labels, preds=preds, \
+                            class_names=class_names)})
+                        
+
     return {
         'micro f1 score': f1,
         'auprc': auprc,

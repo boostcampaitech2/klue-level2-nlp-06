@@ -5,13 +5,35 @@ import torch
 import sklearn
 import numpy as np
 from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_score
-from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments, RobertaConfig, RobertaTokenizer, RobertaForSequenceClassification, BertTokenizer
+from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments, RobertaConfig, RobertaTokenizer, RobertaForSequenceClassification, BertTokenizer, EarlyStoppingCallback
 from load_data import *
 import random
 import wandb
+from pathlib import Path
+import glob
+import re
+
+
 wandb.login()
 
 from config_parser import config as cfg
+
+# code from mask competition
+def increment_path(path, exist_ok=False):
+    """ Automatically increment path, i.e. runs/exp --> runs/exp0, runs/exp1 etc.
+    Args:
+        path (str or pathlib.Path): f"{model_dir}/{args.name}".
+        exist_ok (bool): whether increment path (increment if False).
+    """
+    path = Path(path)
+    if (path.exists() and exist_ok) or (not path.exists()):
+        return str(path)
+    else:
+        dirs = glob.glob(f"{path}*")
+        matches = [re.search(rf"%s(\d+)" % path.stem, d) for d in dirs]
+        i = [int(m.groups()[0]) for m in matches if m]
+        n = max(i) + 1 if i else 2
+        return f"{path}{n}"
 
 def seed_everything(seed):
     torch.manual_seed(seed)
@@ -89,13 +111,15 @@ def label_to_num(label):
     return num_label
 
 
-def train():
+def train(args):
     seed_everything(2021) # fix seed to current year
 
     # load model and tokenizer
     # MODEL_NAME = "bert-base-uncased"
     MODEL_NAME = cfg['model']['huggingface']
+
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+    
 
     # load dataset
     train_dataset, dev_dataset = load_stratified_data("../dataset/train/train.csv")
@@ -129,31 +153,50 @@ def train():
 
     # 사용한 option 외에도 다양한 option들이 있습니다.
     # https://huggingface.co/transformers/main_classes/trainer.html#trainingarguments 참고해주세요.
-    training_args = TrainingArguments(**cfg['TrainingArguments'])
+    training_args = TrainingArguments(**args['training_arg'])
+
+    # early stop argument
+    callbacks_list = []
+    if args['early_stop']:
+        callbacks_list.append( EarlyStoppingCallback(early_stopping_patience = args['patience']) )
 
     trainer = Trainer(
         model=model,                         # the instantiated 🤗 Transformers model to be trained
         args=training_args,                  # training arguments, defined above
         train_dataset=RE_train_dataset,         # training dataset
         eval_dataset=RE_dev_dataset,             # evaluation dataset
-        compute_metrics=compute_metrics         # define metrics function
+        compute_metrics=compute_metrics,         # define metrics function
+        callbacks = callbacks_list
     )
 
     # train model
     trainer.train()
-    model.save_pretrained('./best_model/' + cfg['wandb']['name'])
+    model.save_pretrained('./best_model/' + args['exp_name'])
     wandb.finish()
 
 
 def main():
 
-    # append result output directory
-    output_dir = cfg['TrainingArguments']['output_dir']
+    # append result output directory and rename with experiment number
+    output_dir = cfg['train']['TrainingArguments']['output_dir']
     exp_name = cfg['wandb']['name']
-    cfg['TrainingArguments']['output_dir'] = output_dir + "/" + exp_name    
+
+    cfg['train']['TrainingArguments']['output_dir'] = increment_path(output_dir + "/" + exp_name + "_exp")        
+    cfg['wandb']['name'] = cfg['train']['TrainingArguments']['output_dir'].split("/")[-1]
+    print(cfg['wandb']['name'])
+    print(cfg['train']['TrainingArguments']['output_dir'])
+    return
+    args = {'training_arg' : cfg['train']['TrainingArguments'], \
+            'exp_name' : exp_name,\
+            'early_stop': cfg['train']['early_stop']['true']}
+
+    #early stop
+    if cfg['train']['early_stop']['true']:
+        args['patience'] =  cfg['train']['early_stop']['patience']
 
     wandb.init(project='klue-RE', name=cfg['wandb']['name'],tags=cfg['wandb']['tags'], group=cfg['wandb']['group'], entity='boostcamp-nlp-06')
-    train()
+    
+    train(args)
 
 
 if __name__ == '__main__':

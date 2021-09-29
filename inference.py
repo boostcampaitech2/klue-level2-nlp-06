@@ -65,7 +65,7 @@ def main(args):
   """
   device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
   # load tokenizer
-  Tokenizer_NAME = "klue/bert-base"
+  Tokenizer_NAME = "klue/roberta-large"
   tokenizer = AutoTokenizer.from_pretrained(Tokenizer_NAME)
 
   ## load my model
@@ -95,7 +95,7 @@ if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   
   # model dir
-  parser.add_argument('--model_dir', type=str, default="results/roberta_base_stratified/checkpoint-2000")
+  parser.add_argument('--model_dir', type=str, default="results/roberta_base_stratified_exp/checkpoint-2000")
   args = parser.parse_args()
   print(args)
   main(args)

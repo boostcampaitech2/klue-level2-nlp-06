@@ -1,6 +1,6 @@
   {
     "wandb":{
-      "name" : "roberta_base_stratified",
+      "name" : "roberta_large_stratified",
       "tags" : ["ROBERT_LARGE", "stratified", "10epoch"], 
       "group" : "ROBERT_LARGE"
     },

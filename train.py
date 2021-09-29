@@ -185,7 +185,7 @@ def main():
     cfg['wandb']['name'] = cfg['train']['TrainingArguments']['output_dir'].split("/")[-1]
     print(cfg['wandb']['name'])
     print(cfg['train']['TrainingArguments']['output_dir'])
-    return
+
     args = {'training_arg' : cfg['train']['TrainingArguments'], \
             'exp_name' : exp_name,\
             'early_stop': cfg['train']['early_stop']['true']}

@@ -1,20 +1,20 @@
   {
     "wandb":{
-      "name" : "layer_3",
-      "tags" : ["BERT_BASE", "model", "base_line"], 
-      "group" : "BERT-BASE"
+      "name" : "roberta_base_stratified",
+      "tags" : ["ROBERT_LARGE", "stratified", "10epoch"], 
+      "group" : "ROBERT_LARGE"
     },
 
     "train":{
 
       "TrainingArguments" : {
         "output_dir":"./results",          
-        "save_total_limit":5,              
+        "save_total_limit":10,              
         "save_steps":500,                 
-        "num_train_epochs":20,              
+        "num_train_epochs":10,              
         "learning_rate":5e-5,               
-        "per_device_train_batch_size":100,  
-        "per_device_eval_batch_size":100,   
+        "per_device_train_batch_size":38,  
+        "per_device_eval_batch_size":38,   
         "warmup_steps":500,                
         "weight_decay":0.01,               
         "logging_dir":"./logs",            
@@ -32,9 +32,8 @@
     
 
     "model" :{
-      "huggingface": "klue/bert-base",
+      "huggingface": "klue/roberta-large",
       "config":{
-        "num_hidden_layers" : 3,
         "num_labels" : 30
       }
     }

@@ -1,6 +1,6 @@
   {
     "wandb":{
-      "name" : "roberta_base_stratified",
+      "name" : "roberta_large_stratified",
       "tags" : ["ROBERT_LARGE", "stratified", "10epoch"], 
       "group" : "ROBERT_LARGE"
     },
@@ -10,8 +10,8 @@
       "TrainingArguments" : {
         "output_dir":"./results",          
         "save_total_limit":10,              
-        "save_steps":500,                 
-        "num_train_epochs":10,              
+        "save_steps":100,                 
+        "num_train_epochs":3,              
         "learning_rate":5e-5,               
         "per_device_train_batch_size":38,  
         "per_device_eval_batch_size":38,   
@@ -20,7 +20,7 @@
         "logging_dir":"./logs",            
         "logging_steps":100,              
         "evaluation_strategy":"steps", 
-        "eval_steps" : 500,            
+        "eval_steps" : 100,            
         "load_best_model_at_end" : true
       },
       "early_stop": {

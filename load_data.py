@@ -29,6 +29,11 @@ def preprocessing_dataset(dataset):
     subject_entity.append(i)
     object_entity.append(j)
   out_dataset = pd.DataFrame({'id':dataset['id'], 'sentence':dataset['sentence'],'subject_entity':subject_entity,'object_entity':object_entity,'label':dataset['label'],})
+  duplied = out_dataset[out_dataset.duplicated(subset=['sentence','subject_entity','object_entity'])]
+  duplied_no_idx = duplied[duplied['label'] == 'no_relation']['id'].to_list()
+  for idx in duplied_no_idx:
+    out_dataset.drop(out_dataset.loc[out_dataset['id']==idx].index, inplace=True)
+  out_dataset = out_dataset.drop_duplicates(subset=['sentence','subject_entity','object_entity','label'],keep='first')  
   return out_dataset
 
 def load_data(dataset_dir):

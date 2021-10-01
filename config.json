@@ -2,14 +2,14 @@
     "wandb":{
       "name" : "roberta_large_stratified",
       "tags" : ["ROBERT_LARGE", "stratified", "10epoch"], 
-      "group" : "ROBERT_LARGE"
+      "group" : "Weighted_CE"
     },
 
     "train":{
 
       "TrainingArguments" : {
         "output_dir":"./results",          
-        "save_total_limit":10,              
+        "save_total_limit":1,              
         "save_steps":100,                 
         "num_train_epochs":3,              
         "learning_rate":5e-5,               

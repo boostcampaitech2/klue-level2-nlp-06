@@ -1,8 +1,21 @@
 import pickle as pickle
 import os
 import pandas as pd
+import numpy as np
 import torch
 from sklearn.model_selection import StratifiedShuffleSplit
+
+label_list = ['no_relation', 'org:top_members/employees', 'org:members',
+                'org:product', 'per:title', 'org:alternate_names',
+                'per:employee_of', 'org:place_of_headquarters', 'per:product',
+                'org:number_of_employees/members', 'per:children',
+                'per:place_of_residence', 'per:alternate_names',
+                'per:other_family', 'per:colleagues', 'per:origin', 'per:siblings',
+                'per:spouse', 'org:founded', 'org:political/religious_affiliation',
+                'org:member_of', 'per:parents', 'org:dissolved',
+                'per:schools_attended', 'per:date_of_death', 'per:date_of_birth',
+                'per:place_of_birth', 'per:place_of_death', 'org:founded_by',
+                'per:religion']
 
 class RE_Dataset(torch.utils.data.Dataset):
   """ Dataset 구성을 위한 class."""
@@ -69,4 +82,15 @@ def load_stratified_data(dataset_dir):
   dev_dataset = preprocessing_dataset(strat_dev_set)  
   return train_dataset, dev_dataset
 
+def get_label_weight():
+  pd_dataset = pd.read_csv("../dataset/train/train.csv")
+  counts = pd_dataset.label.value_counts()
 
+  df = pd.DataFrame(label_list, columns = ['label'])
+  df = df.set_index('label')
+  df['label_index'] = list(np.arange(len(df)))
+  df = pd.concat([df, counts], axis=1)
+  df = df.set_axis(["label_index", "counts"], axis = 1)
+
+  w_df = len(pd_dataset) / (30 * df['counts'])
+  return w_df.values

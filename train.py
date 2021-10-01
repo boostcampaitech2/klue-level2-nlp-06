@@ -2,6 +2,7 @@ import pickle as pickle
 import os
 import pandas as pd
 import torch
+from torch.nn import CrossEntropyLoss
 import sklearn
 import numpy as np
 from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_score
@@ -17,6 +18,30 @@ import re
 wandb.login()
 
 from config_parser import config as cfg
+
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
+
+class RE_Trainer(Trainer):
+
+
+    def compute_loss(self, model, inputs, return_outputs=False):
+        labels = inputs.get("labels")
+        outputs = model(**inputs)
+        logits = outputs.get('logits')
+
+        # weighted CE
+        loss_fct = CrossEntropyLoss(weight = torch.tensor(get_label_weight()).float().to(device))
+
+        # focal loss
+        # from focal_loss import FocalLoss
+        # loss_fct = FocalLoss()
+
+        
+        loss = loss_fct(logits, labels)
+        return (loss, outputs) if return_outputs else loss
+
+
 
 # code from mask competition
 def increment_path(path, exist_ok=False):
@@ -46,17 +71,7 @@ def seed_everything(seed):
 
 def klue_re_micro_f1(preds, labels):
     """KLUE-RE micro f1 (except no_relation)"""
-    label_list = ['no_relation', 'org:top_members/employees', 'org:members',
-                  'org:product', 'per:title', 'org:alternate_names',
-                  'per:employee_of', 'org:place_of_headquarters', 'per:product',
-                  'org:number_of_employees/members', 'per:children',
-                  'per:place_of_residence', 'per:alternate_names',
-                  'per:other_family', 'per:colleagues', 'per:origin', 'per:siblings',
-                  'per:spouse', 'org:founded', 'org:political/religious_affiliation',
-                  'org:member_of', 'per:parents', 'org:dissolved',
-                  'per:schools_attended', 'per:date_of_death', 'per:date_of_birth',
-                  'per:place_of_birth', 'per:place_of_death', 'org:founded_by',
-                  'per:religion']
+
     no_relation_label_idx = label_list.index("no_relation")
     label_indices = list(range(len(label_list)))
     label_indices.remove(no_relation_label_idx)
@@ -135,7 +150,6 @@ def train(args):
     RE_train_dataset = RE_Dataset(tokenized_train, train_label)
     RE_dev_dataset = RE_Dataset(tokenized_dev, dev_label)
 
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     print(device)
     # setting model hyperparameter
@@ -146,6 +160,11 @@ def train(args):
 
     model = AutoModelForSequenceClassification.from_pretrained(
         MODEL_NAME, config=model_config)
+    
+    # if args['resume_path']:
+    #     model = AutoModelForSequenceClassification.from_pretrained(
+    #     args['resume_path'], config=model_config)
+
     print(model.config)
 
     model.parameters
@@ -161,6 +180,7 @@ def train(args):
         callbacks_list.append( EarlyStoppingCallback(early_stopping_patience = args['patience']) )
 
     trainer = Trainer(
+    # trainer = RE_Trainer(
         model=model,                         # the instantiated 🤗 Transformers model to be trained
         args=training_args,                  # training arguments, defined above
         train_dataset=RE_train_dataset,         # training dataset
@@ -195,7 +215,11 @@ def main():
         args['patience'] =  cfg['train']['early_stop']['patience']
 
     wandb.init(project='klue-RE', name=cfg['wandb']['name'],tags=cfg['wandb']['tags'], group=cfg['wandb']['group'], entity='boostcamp-nlp-06')
-    
+
+    # args['resume_path'] = "./results/roberta_large_stratified_WCE_exp/checkpoint-600/"
+    # os.environ["WANDB_RESUME"] = "must"
+    # os.environ["WANDB_RUN_ID"] = "1lgzl8du"
+    # wandb.init()
     train(args)
 
 

@@ -122,7 +122,7 @@ def train(args):
     
 
     # load dataset
-    train_dataset, dev_dataset = load_stratified_data("../dataset/train/train.csv")
+    train_dataset, dev_dataset = load_stratified_data("../dataset/train/train.csv", aug = True)
 
     train_label = label_to_num(train_dataset['label'].values)
     dev_label = label_to_num(dev_dataset['label'].values)

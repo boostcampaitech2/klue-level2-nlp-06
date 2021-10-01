@@ -1,8 +1,8 @@
   {
     "wandb":{
-      "name" : "roberta_large_stratified",
-      "tags" : ["ROBERT_LARGE", "stratified", "10epoch"], 
-      "group" : "ROBERT_LARGE"
+      "name" : "roberta_large_stratified_aug_koEda_per:children_per:colleagues_per:other_family",
+      "tags" : ["ROBERT_LARGE", "stratified", "3epoch"], 
+      "group" : "augmentation"
     },
 
     "train":{
@@ -24,7 +24,7 @@
         "load_best_model_at_end" : true
       },
       "early_stop": {
-        "true" : false,
+        "true" : true,
         "patience" : 5
       }
       

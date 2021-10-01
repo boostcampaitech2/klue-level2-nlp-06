@@ -4,6 +4,10 @@ import pandas as pd
 import torch
 from sklearn.model_selection import StratifiedShuffleSplit
 
+os.chdir('./KorEDA/')
+from KorEDA.eda import *
+os.chdir('../')
+
 class RE_Dataset(torch.utils.data.Dataset):
   """ Dataset 구성을 위한 class."""
   def __init__(self, pair_dataset, labels):
@@ -22,12 +26,30 @@ def preprocessing_dataset(dataset):
   """ 처음 불러온 csv 파일을 원하는 형태의 DataFrame으로 변경 시켜줍니다."""
   subject_entity = []
   object_entity = []
+  good_flag = False
+  bad_flag = False
   for i,j in zip(dataset['subject_entity'], dataset['object_entity']):
-    i = i[1:-1].split(',')[0].split(':')[1]
-    j = j[1:-1].split(',')[0].split(':')[1]
 
-    subject_entity.append(i)
-    object_entity.append(j)
+
+    try:
+      if not good_flag:
+        good_flag = True
+        print("good case")
+        print(i)
+        print(j)
+        print(type(i))
+      i = i[1:-1].split(',')[0].split(':')[1]
+      j = j[1:-1].split(',')[0].split(':')[1]
+
+      subject_entity.append(i)
+      object_entity.append(j)
+    except:
+      if not bad_flag:
+        print("bad case")
+        bad_flag = True
+        print(i)
+        print(j)
+        print(type(i))
   out_dataset = pd.DataFrame({'id':dataset['id'], 'sentence':dataset['sentence'],'subject_entity':subject_entity,'object_entity':object_entity,'label':dataset['label'],})
   return out_dataset
 
@@ -57,7 +79,58 @@ def tokenized_dataset(dataset, tokenizer):
       )
   return tokenized_sentences
 
-def load_stratified_data(dataset_dir):
+
+
+def augmentation(target_set):
+  new_row = []
+  for idx, sentence in enumerate(target_set.sentence):
+    words = sentence.split(' ')
+    words = [word for word in words if word is not ""]
+
+    eg = target_set.iloc[idx]
+
+    sub = eval(eg['subject_entity'])
+    sub_ent = sub['word']
+    sub_len = sub['end_idx'] - sub['start_idx']
+
+
+    obj = eval(eg['object_entity'])
+    obj_ent = obj['word']
+    obj_len = obj['end_idx'] - obj['start_idx']
+
+    times = 0
+    
+    trial = 0
+    num_failed = 0
+    while True:
+      res = random_swap(words, 5)
+      res = " ".join(res)
+      trial += 1
+      if trial == 10:
+        num_failed += 1
+        break
+
+      if res.find(sub_ent) == -1 or res.find(obj_ent) == -1:
+        continue
+
+      _sub = sub.copy()
+      _sub['start_idx'] = res.index(sub_ent)
+      _sub['end_idx'] = _sub['start_idx'] + sub_len
+
+      _obj = obj.copy()
+      _obj['start_idx'] = res.index(obj_ent)
+      _obj['end_idx'] = _obj['start_idx'] + obj_len
+
+      new_row.append( [ len(target_set) + times + 1, res, str(_sub), str(_obj), eg['label'], eg['source'] ] )
+      times += 1
+      
+      if times == 10:
+        break
+  return new_row
+
+
+
+def load_stratified_data(dataset_dir, aug = None):
   """ csv 파일을 경로에 맡게 불러 옵니다. """  
   split = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
   pd_dataset = pd.read_csv(dataset_dir)  
@@ -65,8 +138,22 @@ def load_stratified_data(dataset_dir):
   for train_index, test_index in split.split(pd_dataset, pd_dataset["label"]):
     strat_train_set = pd_dataset.loc[train_index]
     strat_dev_set = pd_dataset.loc[test_index]
+
+  if aug:
+    before = len(strat_train_set)
+    print("processing data augmentation... may take a while...")
+
+    for l in [ "per:children", "per:colleagues", "per:other_family" ]:
+        target_set = strat_train_set[strat_train_set.label == l]
+        new_rows = augmentation(target_set)
+        new_df = pd.DataFrame(new_rows, columns = target_set.columns)
+        new_df
+        strat_train_set = pd.concat([strat_train_set, new_df])
+
+    after = len(strat_train_set)    
+    print("augmentation finishied. Before aug size: %d, After aug size: %d" %(before, after))
+
   train_dataset = preprocessing_dataset(strat_train_set)  
   dev_dataset = preprocessing_dataset(strat_dev_set)  
   return train_dataset, dev_dataset
-
 

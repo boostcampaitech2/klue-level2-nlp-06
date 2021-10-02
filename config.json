@@ -4,7 +4,9 @@
       "tags" : ["ROBERT_LARGE", "stratified", "10epoch"], 
       "group" : "ROBERT_LARGE"
     },
-
+    "dataPP" :{
+      "specialToken" : "entity&type"
+    },
     "train":{
 
       "TrainingArguments" : {

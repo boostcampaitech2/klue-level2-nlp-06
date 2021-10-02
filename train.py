@@ -110,7 +110,7 @@ def label_to_num(label):
 
     return num_label
 
-
+#entity, type, entity&type, all
 def train(args):
     seed_everything(2021) # fix seed to current year
 
@@ -121,21 +121,22 @@ def train(args):
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
     
 
-    # load dataset
-    train_dataset, dev_dataset = load_stratified_data("../dataset/train/train.csv")
+    # load dataset + prerprocessing dataset
+    train_dataset, dev_dataset = load_stratified_data("../dataset/train/train.csv") 
 
     train_label = label_to_num(train_dataset['label'].values)
     dev_label = label_to_num(dev_dataset['label'].values)
 
     # tokenizing dataset
-    tokenized_train = tokenized_dataset(train_dataset, tokenizer)
-    tokenized_dev = tokenized_dataset(dev_dataset, tokenizer)
+    tokenized_train, len_tokenizer = tokenized_dataset(train_dataset, tokenizer, cfg['dataPP']['specialToken'])
+    tokenized_dev, _ = tokenized_dataset(dev_dataset, tokenizer,  cfg['dataPP']['specialToken'])
 
     # make dataset for pytorch.
     RE_train_dataset = RE_Dataset(tokenized_train, train_label)
     RE_dev_dataset = RE_Dataset(tokenized_dev, dev_label)
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    #device = torch.device('cpu')
 
     print(device)
     # setting model hyperparameter
@@ -146,8 +147,8 @@ def train(args):
 
     model = AutoModelForSequenceClassification.from_pretrained(
         MODEL_NAME, config=model_config)
-    print(model.config)
-
+    model.resize_token_embeddings(len_tokenizer)
+    print(model.config)    
     model.parameters
     model.to(device)
 

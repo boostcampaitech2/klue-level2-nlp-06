@@ -29,11 +29,14 @@ def inference(model, tokenized_sent, device):
     logits = outputs[0]
     prob = F.softmax(logits, dim=-1).detach().cpu().numpy()
     logits = logits.detach().cpu().numpy()
-    result = np.argmax(logits, axis=-1)
+    logits[:,0] = 0
+    result = np.argmax(logits, axis=-1) #(16, 29)
+    print(result, len(result))
 
     output_pred.append(result)
     output_prob.append(prob)
   
+  #print(output_prob, len(output_prob))
   return np.concatenate(output_pred).tolist(), np.concatenate(output_prob, axis=0).tolist()
 
 def num_to_label(label):
@@ -82,7 +85,7 @@ def main(args):
   ## predict answer
   pred_answer, output_prob = inference(model, Re_test_dataset, device) # model에서 class 추론
   pred_answer = num_to_label(pred_answer) # 숫자로 된 class를 원래 문자열 라벨로 변환.
-  
+
   ## make csv file with predicted answer
   #########################################################
   # 아래 directory와 columns의 형태는 지켜주시기 바랍니다.

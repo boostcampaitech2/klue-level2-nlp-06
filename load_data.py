@@ -95,6 +95,8 @@ class RE_Dataset(torch.utils.data.Dataset):
     item = {key: val[idx].clone().detach() for key, val in self.pair_dataset.items()}
     item['labels'] = torch.tensor(self.labels[idx])
     return item
+  def get_labels(self):
+    return self.labels
 
   def __len__(self):
     return len(self.labels)
@@ -131,10 +133,10 @@ def load_data(dataset_dir):
   
   return dataset
 
-def tokenized_dataset(dataset, tokenizer, type='original'):
+def tokenized_dataset(dataset, tokenizer, type='none'):
   """ tokenizer에 따라 sentence를 tokenizing 합니다."""
   concat_entity = []
-  if type == 'original' : 
+  if type == 'none' : 
     for e01, e02 in zip(dataset['subject_entity'], dataset['object_entity']):
       temp = ''
       temp = e01 + '[SEP]' + e02

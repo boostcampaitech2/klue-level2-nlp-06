@@ -12,12 +12,32 @@ import wandb
 from pathlib import Path
 import glob
 import re
-
+from torch.utils.data import DataLoader
+from torchsampler import ImbalancedDatasetSampler
 
 wandb.login()
 
 from config_parser import config as cfg
+class ImbalancedSamplerTrainer(Trainer):
+    def get_train_dataloader(self) -> DataLoader:
+        train_dataset = self.train_dataset
 
+        def get_label(dataset):
+            return dataset.get_labels()
+
+        train_sampler = ImbalancedDatasetSampler(
+            train_dataset, callback_get_label=get_label
+        )
+
+        return DataLoader(
+            train_dataset,
+            batch_size=self.args.train_batch_size,
+            sampler=train_sampler,
+            collate_fn=self.data_collator,
+            drop_last=self.args.dataloader_drop_last,
+            num_workers=self.args.dataloader_num_workers,
+            pin_memory=self.args.dataloader_pin_memory,
+        )
 # code from mask competition
 def increment_path(path, exist_ok=False):
     """ Automatically increment path, i.e. runs/exp --> runs/exp0, runs/exp1 etc.
@@ -160,8 +180,17 @@ def train(args):
     callbacks_list = []
     if args['early_stop']:
         callbacks_list.append( EarlyStoppingCallback(early_stopping_patience = args['patience']) )
-
-    trainer = Trainer(
+    if cfg['train']['Trainer']['use_imbalanced_sampler'] :   
+        trainer = ImbalancedSamplerTrainer(
+            model=model,                         # the instantiated 🤗 Transformers model to be trained
+            args=training_args,                  # training arguments, defined above
+            train_dataset=RE_train_dataset,         # training dataset
+            eval_dataset=RE_dev_dataset,             # evaluation dataset
+            compute_metrics=compute_metrics,         # define metrics function
+            callbacks = callbacks_list
+        )
+    else : 
+        trainer = Trainer(
         model=model,                         # the instantiated 🤗 Transformers model to be trained
         args=training_args,                  # training arguments, defined above
         train_dataset=RE_train_dataset,         # training dataset

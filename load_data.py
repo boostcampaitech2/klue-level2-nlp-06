@@ -23,11 +23,13 @@ def preprocessing_dataset(dataset):
   subject_entity = []
   object_entity = []
   for i,j in zip(dataset['subject_entity'], dataset['object_entity']):
-    i = i[1:-1].split(',')[0].split(':')[1]
-    j = j[1:-1].split(',')[0].split(':')[1]
+    s = eval(i)['type']
+    o = eval(j)['type']
+    i = eval(i)['word']
+    j = eval(j)['word']
 
-    subject_entity.append(i)
-    object_entity.append(j)
+    subject_entity.append(i + ' ' + s)
+    object_entity.append(j + ' ' + o)
   out_dataset = pd.DataFrame({'id':dataset['id'], 'sentence':dataset['sentence'],'subject_entity':subject_entity,'object_entity':object_entity,'label':dataset['label'],})
   return out_dataset
 

@@ -23,11 +23,13 @@ def preprocessing_dataset(dataset):
   subject_entity = []
   object_entity = []
   for i,j in zip(dataset['subject_entity'], dataset['object_entity']):
-    i = i[1:-1].split(',')[0].split(':')[1]
-    j = j[1:-1].split(',')[0].split(':')[1]
+    # i = i[1:-1].split(',')[0].split(':')[1]
+    # j = j[1:-1].split(',')[0].split(':')[1]
 
-    subject_entity.append(i)
-    object_entity.append(j)
+    # subject_entity.append(i)
+    # object_entity.append(j)
+    subject_entity.append(eval(i)['word'])
+    object_entity.append(eval(j)['word'])
   out_dataset = pd.DataFrame({'id':dataset['id'], 'sentence':dataset['sentence'],'subject_entity':subject_entity,'object_entity':object_entity,'label':dataset['label'],})
   duplied = out_dataset[out_dataset.duplicated(subset=['sentence','subject_entity','object_entity'])]
   duplied_no_idx = duplied[duplied['label'] == 'no_relation']['id'].to_list()

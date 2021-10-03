@@ -18,6 +18,52 @@ wandb.login()
 
 from config_parser import config as cfg
 
+EVAL_DATA = None
+
+def compute_metrics(pred):
+    """ validation을 위한 metrics function """
+
+    labels = pred.label_ids
+    preds = pred.predictions.argmax(-1)
+    probs = pred.predictions
+
+    # calculate accuracy using sklearn's function
+    f1 = klue_re_micro_f1(preds, labels)
+    auprc = klue_re_auprc(probs, labels)
+    acc = accuracy_score(labels, preds)  # 리더보드 평가에는 포함되지 않습니다.
+
+    class_names = np.arange(30)
+
+    wandb.log({"conf_mat" : wandb.plot.confusion_matrix(probs=None, \
+                            y_true=labels, preds=preds, \
+                            class_names=class_names)})
+
+    data = EVAL_DATA
+    pred_label = num_to_label(preds)
+    for i, p in enumerate(pred_label):
+        data[i].append(p)
+
+    columns=["sentence",  "sub", "obj", "labels", "pred"]
+    test_table = wandb.Table(data=data, columns=columns)
+    wandb.log({"prediction table":test_table})           
+
+    return {
+        'micro f1 score': f1,
+        'auprc': auprc,
+        'accuracy': acc,
+    }
+
+
+def num_to_label(label):
+    label_num = []
+    with open('dict_num_to_label.pkl', 'rb') as f:
+        dict_num_to_label = pickle.load(f)
+    for v in label:
+        label_num.append(dict_num_to_label[v])
+
+    return label_num
+
+
 # code from mask competition
 def increment_path(path, exist_ok=False):
     """ Automatically increment path, i.e. runs/exp --> runs/exp0, runs/exp1 etc.
@@ -76,29 +122,6 @@ def klue_re_auprc(probs, labels):
     return np.average(score) * 100.0
 
 
-def compute_metrics(pred):
-    """ validation을 위한 metrics function """
-    labels = pred.label_ids
-    preds = pred.predictions.argmax(-1)
-    probs = pred.predictions
-
-    # calculate accuracy using sklearn's function
-    f1 = klue_re_micro_f1(preds, labels)
-    auprc = klue_re_auprc(probs, labels)
-    acc = accuracy_score(labels, preds)  # 리더보드 평가에는 포함되지 않습니다.
-
-    class_names = np.arange(30)
-
-    wandb.log({"conf_mat" : wandb.plot.confusion_matrix(probs=None, \
-                            y_true=labels, preds=preds, \
-                            class_names=class_names)})
-                        
-
-    return {
-        'micro f1 score': f1,
-        'auprc': auprc,
-        'accuracy': acc,
-    }
 
 
 def label_to_num(label):
@@ -121,6 +144,7 @@ def train(args):
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
     
 
+
     # load dataset
     train_dataset, dev_dataset = load_stratified_data("../dataset/train/train.csv")
 
@@ -135,6 +159,26 @@ def train(args):
     RE_train_dataset = RE_Dataset(tokenized_train, train_label)
     RE_dev_dataset = RE_Dataset(tokenized_dev, dev_label)
 
+
+    from torch.utils.data import DataLoader
+
+    def create_result():
+        loader = DataLoader(RE_dev_dataset, shuffle = False)
+        
+        data = []
+        
+        for l in loader:
+            input_ids = l['input_ids']
+            input = tokenizer.decode(input_ids.numpy()[0], skip_special_tokens = True ).split()
+            
+            label = num_to_label([ l['labels'].numpy()[0] ])
+
+            data.append( [ " ".join(input[2:]), input[0], input[1], label  ] )
+
+        return data
+
+    global EVAL_DATA
+    EVAL_DATA = create_result()
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     print(device)
@@ -166,7 +210,8 @@ def train(args):
         train_dataset=RE_train_dataset,         # training dataset
         eval_dataset=RE_dev_dataset,             # evaluation dataset
         compute_metrics=compute_metrics,         # define metrics function
-        callbacks = callbacks_list
+        callbacks = callbacks_list,
+        tokenizer = tokenizer
     )
 
     # train model

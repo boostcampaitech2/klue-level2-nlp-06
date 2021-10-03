@@ -1,24 +1,59 @@
 import pickle as pickle
-import os
+import os, torch, sklearn, random, wandb, glob, re
 import pandas as pd
-import torch
-import sklearn
 import numpy as np
 from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_score
 from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments, RobertaConfig, RobertaTokenizer, RobertaForSequenceClassification, BertTokenizer, EarlyStoppingCallback
 from load_data import *
-import random
-import wandb
 from pathlib import Path
-import glob
-import re
 from torch.utils.data import DataLoader
 from torchsampler import ImbalancedDatasetSampler
+import torch.nn.functional as F
+from torch.autograd import Variable
 
 wandb.login()
 
 from config_parser import config as cfg
+
+class FocalLoss(torch.nn.Module):
+    def __init__(self, gamma=0, alpha=None, size_average=True):
+        super(FocalLoss, self).__init__()
+        self.gamma = gamma
+        self.alpha = alpha
+        if isinstance(alpha, (float, int)): self.alpha = torch.Tensor([alpha, 1 - alpha])
+        if isinstance(alpha, list): self.alpha = torch.Tensor(alpha)
+        self.size_average = size_average
+
+    def forward(self, input, target):
+        if input.dim()>2:
+            input = input.view(input.size(0), input.size(1), -1)  # N,C,H,W => N,C,H*W
+            input = input.transpose(1, 2)                         # N,C,H*W => N,H*W,C
+            input = input.contiguous().view(-1, input.size(2))    # N,H*W,C => N*H*W,C
+        target = target.view(-1, 1)
+
+        logpt = F.log_softmax(input, dim=1)
+        logpt = logpt.gather(1,target)
+        logpt = logpt.view(-1)
+        pt = logpt.exp()
+
+        if self.alpha is not None:
+            if self.alpha.type() != input.data.type():
+                self.alpha = self.alpha.type_as(input.data)
+            at = self.alpha.gather(0, target.data.view(-1))
+            logpt = logpt * at
+
+        loss = -1 * (1 - pt)**self.gamma * logpt
+        if self.size_average: return loss.mean()
+        else: return loss.sum()
+
 class ImbalancedSamplerTrainer(Trainer):
+    def compute_loss(self, model, inputs, return_outputs=False):
+        labels = inputs.pop("labels")
+        outputs= model(**inputs)
+        logits = outputs.logits
+        criterion = FocalLoss()
+        loss = criterion(logits.view(-1, self.model.config.num_labels), labels.view(-1))
+        return (loss, outputs) if return_outputs else loss
     def get_train_dataloader(self) -> DataLoader:
         train_dataset = self.train_dataset
 

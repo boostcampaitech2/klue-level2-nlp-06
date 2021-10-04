@@ -1,6 +1,6 @@
   {
     "wandb":{
-      "name" : "roberta_large_add_quotes",
+      "name" : "roberta_large_del_qutoes_with_string",
       "tags" : ["ROBERT_LARGE", "stratified", "3epoch", "add_entity"], 
       "group" : "ROBERT_LARGE"
     },

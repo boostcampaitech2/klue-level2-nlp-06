@@ -95,7 +95,7 @@ if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   
   # model dir
-  parser.add_argument('--model_dir', type=str, default="results/roberta_large_add_quotes_exp/checkpoint-2000")
+  parser.add_argument('--model_dir', type=str, default="results/roberta_large_del_qutoes_with_string_exp2/checkpoint-2000")
   args = parser.parse_args()
   print(args)
   main(args)

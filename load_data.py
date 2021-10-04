@@ -18,15 +18,16 @@ class RE_Dataset(torch.utils.data.Dataset):
   def __len__(self):
     return len(self.labels)
 
+import re
 def preprocessing_dataset(dataset):
   """ 처음 불러온 csv 파일을 원하는 형태의 DataFrame으로 변경 시켜줍니다."""
   subject_entity = []
   object_entity = []
   for i,j in zip(dataset['subject_entity'], dataset['object_entity']):
-    s = eval(i)['type']
-    o = eval(j)['type']
-    i = eval(i)['word']
-    j = eval(j)['word']
+    # s = eval(i)['type']
+    # o = eval(j)['type']
+    # i = eval(i)['word']
+    # j = eval(j)['word']
 
     # 1. Entity추가
     # subject_entity.append(i + ' ' + s)
@@ -37,6 +38,16 @@ def preprocessing_dataset(dataset):
     # object_entity.append("'" + j + "'")
 
     # 3. ' '차이 확인
+    # subject_entity.append(i)
+    # object_entity.append(j)
+
+    # 0. 원본
+    i = i[1:-1].split(',')[0].split(':')[1]
+    j = j[1:-1].split(',')[0].split(':')[1]
+
+    # 4. string + '제거
+    i = re.sub(r"\'",'' ,i).strip()
+    j = re.sub(r"\'",'' ,j).strip()   
     subject_entity.append(i)
     object_entity.append(j)
   out_dataset = pd.DataFrame({'id':dataset['id'], 'sentence':dataset['sentence'],'subject_entity':subject_entity,'object_entity':object_entity,'label':dataset['label'],})

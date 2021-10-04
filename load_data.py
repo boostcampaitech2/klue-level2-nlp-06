@@ -33,12 +33,12 @@ def preprocessing_dataset(dataset):
     # object_entity.append(j + ' ' + o)
 
     # # 2. ,차이 확인
-    subject_entity.append("'" + i + "'")
-    object_entity.append("'" + j + "'")
+    # subject_entity.append("'" + i + "'")
+    # object_entity.append("'" + j + "'")
 
     # 3. ' '차이 확인
-    # subject_entity.append(i)
-    # object_entity.append(j)
+    subject_entity.append(i)
+    object_entity.append(j)
   out_dataset = pd.DataFrame({'id':dataset['id'], 'sentence':dataset['sentence'],'subject_entity':subject_entity,'object_entity':object_entity,'label':dataset['label'],})
   return out_dataset
 

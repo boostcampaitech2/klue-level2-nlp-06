@@ -1,8 +1,8 @@
   {
     "wandb":{
-      "name" : "roberta_large_del_qutoes_with_string",
-      "tags" : ["ROBERT_LARGE", "stratified", "3epoch", "add_entity"], 
-      "group" : "ROBERT_LARGE"
+      "name" : "kobert_base_3e",
+      "tags" : ["KOBERT_BASE", "stratified", "3epoch"], 
+      "group" : "KOBERT_BASE"
     },
 
     "train":{
@@ -11,10 +11,10 @@
         "output_dir":"./results",          
         "save_total_limit":1,              
         "save_steps":100,                 
-        "num_train_epochs":3,              
+        "num_train_epochs":10,              
         "learning_rate":5e-5,               
-        "per_device_train_batch_size":38,  
-        "per_device_eval_batch_size":38,
+        "per_device_train_batch_size":108,  
+        "per_device_eval_batch_size":108,
         "warmup_steps":500,                
         "weight_decay":0.01,               
         "logging_dir":"./logs",            
@@ -33,7 +33,7 @@
     
 
     "model" :{
-      "huggingface": "klue/roberta-large",
+      "huggingface": "skt/kobert-base-v1",
       "config":{
         "num_labels" : 30
       }

@@ -46,10 +46,11 @@ def preprocessing_dataset(dataset):
     j = j[1:-1].split(',')[0].split(':')[1]
 
     # 4. string + '제거
-    i = re.sub(r"\'",'' ,i).strip()
-    j = re.sub(r"\'",'' ,j).strip()   
+    # i = re.sub(r"\'",'' ,i).strip()
+    # j = re.sub(r"\'",'' ,j).strip()   
     subject_entity.append(i)
     object_entity.append(j)
+    #print(subject_entity)
   out_dataset = pd.DataFrame({'id':dataset['id'], 'sentence':dataset['sentence'],'subject_entity':subject_entity,'object_entity':object_entity,'label':dataset['label'],})
   return out_dataset
 

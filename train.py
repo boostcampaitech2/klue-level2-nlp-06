@@ -18,6 +18,20 @@ wandb.login()
 
 from config_parser import config as cfg
 
+# following the Huggingface Documentation to implement focal loss.
+class RE_Trainer(Trainer):
+    def compute_loss(self, model, inputs, return_outputs=False):
+        labels = inputs.get("labels")
+        outputs = model(**inputs)
+        logits = outputs.get('logits')
+
+        # focal loss
+        from focal_loss import FocalLoss
+        loss_fct = FocalLoss(gamma=cfg['focal_loss']['gamma'], alpha = cfg['focal_loss']['alpha'])
+        
+        loss = loss_fct(logits, labels)
+        return (loss, outputs) if return_outputs else loss
+
 # code from mask competition
 def increment_path(path, exist_ok=False):
     """ Automatically increment path, i.e. runs/exp --> runs/exp0, runs/exp1 etc.
@@ -160,7 +174,13 @@ def train(args):
     if args['early_stop']:
         callbacks_list.append( EarlyStoppingCallback(early_stopping_patience = args['patience']) )
 
-    trainer = Trainer(
+    # function pointer to contain Trainer class constructor
+    trainer_container = Trainer
+
+    if args['focal_loss']:
+        trainer_container = RE_Trainer
+
+    trainer = trainer_container(
         model=model,                         # the instantiated 🤗 Transformers model to be trained
         args=training_args,                  # training arguments, defined above
         train_dataset=RE_train_dataset,         # training dataset
@@ -188,11 +208,9 @@ def main():
 
     args = {'training_arg' : cfg['train']['TrainingArguments'], \
             'exp_name' : exp_name,\
-            'early_stop': cfg['train']['early_stop']['true']}
-
-    #early stop
-    if cfg['train']['early_stop']['true']:
-        args['patience'] =  cfg['train']['early_stop']['patience']
+            'early_stop': cfg['train']['early_stop']['true'],\
+            'focal_loss' : cfg['train']['focal_loss']['true']    
+            }
 
     wandb.init(project='klue-RE', name=cfg['wandb']['name'],tags=cfg['wandb']['tags'], group=cfg['wandb']['group'], entity='boostcamp-nlp-06')
     

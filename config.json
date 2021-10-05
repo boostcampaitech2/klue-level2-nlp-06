@@ -6,6 +6,11 @@
     },
 
     "train":{
+      "focal_loss":{
+        "true" : false,
+        "alpha" : 0.1,
+        "gamma" : 0.25
+      },
 
       "TrainingArguments" : {
         "output_dir":"./results",          

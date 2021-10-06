@@ -27,7 +27,7 @@ class RE_Trainer(Trainer):
 
         # focal loss
         from focal_loss import FocalLoss
-        loss_fct = FocalLoss(gamma=cfg['focal_loss']['gamma'], alpha = cfg['focal_loss']['alpha'])
+        loss_fct = FocalLoss(gamma=cfg['train']['focal_loss']['gamma'], alpha = cfg['train']['focal_loss']['alpha'])
         
         loss = loss_fct(logits, labels)
         return (loss, outputs) if return_outputs else loss
@@ -209,6 +209,7 @@ def main():
     args = {'training_arg' : cfg['train']['TrainingArguments'], \
             'exp_name' : exp_name,\
             'early_stop': cfg['train']['early_stop']['true'],\
+            'patience': cfg['train']['early_stop']['patience'],\
             'focal_loss' : cfg['train']['focal_loss']['true']    
             }
 

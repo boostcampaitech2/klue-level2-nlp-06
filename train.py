@@ -190,6 +190,7 @@ def train(args):
     )
 
     # train model
+    # trainer.train("/opt/ml/remote/results/roberta_large_stratified_using_MLM_1100_exp/checkpoint-1400")
     trainer.train()
     model.save_pretrained('./best_model/' + args['exp_name'])
     wandb.finish()
@@ -201,7 +202,8 @@ def main():
     output_dir = cfg['train']['TrainingArguments']['output_dir']
     exp_name = cfg['wandb']['name']
 
-    cfg['train']['TrainingArguments']['output_dir'] = increment_path(output_dir + "/" + exp_name + "_exp")        
+
+    cfg['train']['TrainingArguments']['output_dir'] = output_dir + "/" + exp_name + "_exp"#increment_path(output_dir + "/" + exp_name + "_exp")        
     cfg['wandb']['name'] = cfg['train']['TrainingArguments']['output_dir'].split("/")[-1]
     print(cfg['wandb']['name'])
     print(cfg['train']['TrainingArguments']['output_dir'])
@@ -212,7 +214,8 @@ def main():
             'patience': cfg['train']['early_stop']['patience'],\
             'focal_loss' : cfg['train']['focal_loss']['true']    
             }
-
+            
+    # wandb.init(id="3fdn2tkl", resume="allow")
     wandb.init(project='klue-RE', name=cfg['wandb']['name'],tags=cfg['wandb']['tags'], group=cfg['wandb']['group'], entity='boostcamp-nlp-06')
     
     train(args)

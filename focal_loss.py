@@ -4,7 +4,6 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 
 class FocalLoss(nn.Module):
-    # class WeightFocalLoss(nn.Module):
         def __init__(self, weight=None,
                     gamma=2.5, alpha = 0.25, reduction='mean'):
             nn.Module.__init__(self)

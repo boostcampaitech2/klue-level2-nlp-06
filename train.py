@@ -18,6 +18,20 @@ wandb.login()
 
 from config_parser import config as cfg
 
+# following the Huggingface Documentation to implement focal loss.
+class RE_Trainer(Trainer):
+    def compute_loss(self, model, inputs, return_outputs=False):
+        labels = inputs.get("labels")
+        outputs = model(**inputs)
+        logits = outputs.get('logits')
+
+        # focal loss
+        from focal_loss import FocalLoss
+        loss_fct = FocalLoss(gamma=cfg['train']['focal_loss']['gamma'], alpha = cfg['train']['focal_loss']['alpha'])
+        
+        loss = loss_fct(logits, labels)
+        return (loss, outputs) if return_outputs else loss
+
 # code from mask competition
 def increment_path(path, exist_ok=False):
     """ Automatically increment path, i.e. runs/exp --> runs/exp0, runs/exp1 etc.
@@ -122,7 +136,7 @@ def train(args):
     
 
     # load dataset
-    train_dataset, dev_dataset = load_stratified_data("../dataset/train/train.csv", aug = True)
+    train_dataset, dev_dataset = load_stratified_data("../dataset/train/train.csv", aug = args['aug'])
 
     train_label = label_to_num(train_dataset['label'].values)
     dev_label = label_to_num(dev_dataset['label'].values)
@@ -160,7 +174,13 @@ def train(args):
     if args['early_stop']:
         callbacks_list.append( EarlyStoppingCallback(early_stopping_patience = args['patience']) )
 
-    trainer = Trainer(
+    # function pointer to contain Trainer class constructor
+    trainer_container = Trainer
+
+    if args['focal_loss']:
+        trainer_container = RE_Trainer
+
+    trainer = trainer_container(
         model=model,                         # the instantiated 🤗 Transformers model to be trained
         args=training_args,                  # training arguments, defined above
         train_dataset=RE_train_dataset,         # training dataset
@@ -170,6 +190,7 @@ def train(args):
     )
 
     # train model
+    # trainer.train("/opt/ml/remote/results/roberta_large_stratified_using_MLM_1100_exp/checkpoint-1400")
     trainer.train()
     model.save_pretrained('./best_model/' + args['exp_name'])
     wandb.finish()
@@ -181,19 +202,21 @@ def main():
     output_dir = cfg['train']['TrainingArguments']['output_dir']
     exp_name = cfg['wandb']['name']
 
-    cfg['train']['TrainingArguments']['output_dir'] = increment_path(output_dir + "/" + exp_name + "_exp")        
+
+    cfg['train']['TrainingArguments']['output_dir'] = output_dir + "/" + exp_name + "_exp"#increment_path(output_dir + "/" + exp_name + "_exp")        
     cfg['wandb']['name'] = cfg['train']['TrainingArguments']['output_dir'].split("/")[-1]
     print(cfg['wandb']['name'])
     print(cfg['train']['TrainingArguments']['output_dir'])
 
     args = {'training_arg' : cfg['train']['TrainingArguments'], \
             'exp_name' : exp_name,\
-            'early_stop': cfg['train']['early_stop']['true']}
-
-    #early stop
-    if cfg['train']['early_stop']['true']:
-        args['patience'] =  cfg['train']['early_stop']['patience']
-
+            'early_stop': cfg['train']['early_stop']['true'],\
+            'patience': cfg['train']['early_stop']['patience'],\
+            'focal_loss' : cfg['train']['focal_loss']['true'],\
+            'aug' : cfg['aug']
+            }
+            
+    # wandb.init(id="3fdn2tkl", resume="allow")
     wandb.init(project='klue-RE', name=cfg['wandb']['name'],tags=cfg['wandb']['tags'], group=cfg['wandb']['group'], entity='boostcamp-nlp-06')
     
     train(args)

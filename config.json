@@ -1,15 +1,22 @@
   {
     "wandb":{
-      "name" : "roberta_large_stratified_aug_koEda_per:children_per:colleagues_per:other_family",
-      "tags" : ["ROBERT_LARGE", "stratified", "3epoch"], 
-      "group" : "augmentation"
+      "name" : "roberta_large_stratified_using_MLM-tok-size-256",
+      "tags" : ["ROBERT_LARGE", "stratified", "10epoch"], 
+      "group" : "MLM"
     },
 
+    "aug": true,
+
     "train":{
+      "focal_loss":{
+        "true" : false,
+        "alpha" : 0.1,
+        "gamma" : 0.25
+      },
 
       "TrainingArguments" : {
         "output_dir":"./results",          
-        "save_total_limit":10,              
+        "save_total_limit":1,              
         "save_steps":100,                 
         "num_train_epochs":3,              
         "learning_rate":5e-5,               
@@ -32,7 +39,7 @@
     
 
     "model" :{
-      "huggingface": "klue/roberta-large",
+      "huggingface": "/opt/ml/transformers/examples/pytorch/language-modeling/#",
       "config":{
         "num_labels" : 30
       }

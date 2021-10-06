@@ -26,31 +26,36 @@ def preprocessing_dataset(dataset):
   """ 처음 불러온 csv 파일을 원하는 형태의 DataFrame으로 변경 시켜줍니다."""
   subject_entity = []
   object_entity = []
-  good_flag = False
-  bad_flag = False
+  # good_flag = False
+  # bad_flag = False
   for i,j in zip(dataset['subject_entity'], dataset['object_entity']):
 
 
-    try:
-      if not good_flag:
-        good_flag = True
-        print("good case")
-        print(i)
-        print(j)
-        print(type(i))
+    # try:
+    #   if not good_flag:
+    #     good_flag = True
+    #     print("good case")
+    #     print(i)
+    #     print(j)
+    #     print(type(i))
       i = i[1:-1].split(',')[0].split(':')[1]
       j = j[1:-1].split(',')[0].split(':')[1]
 
       subject_entity.append(i)
       object_entity.append(j)
-    except:
-      if not bad_flag:
-        print("bad case")
-        bad_flag = True
-        print(i)
-        print(j)
-        print(type(i))
+    # except:
+    #   if not bad_flag:
+    #     print("bad case")
+    #     bad_flag = True
+    #     print(i)
+    #     print(j)
+    #     print(type(i))
   out_dataset = pd.DataFrame({'id':dataset['id'], 'sentence':dataset['sentence'],'subject_entity':subject_entity,'object_entity':object_entity,'label':dataset['label'],})
+  duplied = out_dataset[out_dataset.duplicated(subset=['sentence','subject_entity','object_entity'])]
+  duplied_no_idx = duplied[duplied['label'] == 'no_relation']['id'].to_list()
+  for idx in duplied_no_idx:
+    out_dataset.drop(out_dataset.loc[out_dataset['id']==idx].index, inplace=True)
+  out_dataset = out_dataset.drop_duplicates(subset=['sentence','subject_entity','object_entity','label'],keep='first')  
   return out_dataset
 
 def load_data(dataset_dir):

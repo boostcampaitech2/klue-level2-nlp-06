@@ -138,12 +138,16 @@ def train(args):
     # load dataset
     train_dataset, dev_dataset = load_stratified_data("../dataset/train/train.csv")
 
-    train_label = label_to_num(train_dataset['label'].values)
+    # train_label = label_to_num(train_dataset['label'].values)
     dev_label = label_to_num(dev_dataset['label'].values)
 
     # tokenizing dataset
-    tokenized_train = tokenized_dataset(train_dataset, tokenizer)
+    # tokenized_train = tokenized_dataset(train_dataset, tokenizer)
     tokenized_dev = tokenized_dataset(dev_dataset, tokenizer)
+
+    # aeda
+    train_label_string, tokenized_train = aeda(train_dataset, tokenizer)
+    train_label = label_to_num(train_label_string)
 
     # make dataset for pytorch.
     RE_train_dataset = RE_Dataset(tokenized_train, train_label)

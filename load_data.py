@@ -43,6 +43,97 @@ def load_data(dataset_dir):
   
   return dataset
 
+def insert_punctuation_marks(words):
+    PUNCTUATIONS = ['.', ',', '!', '?', ';', ':']
+    PUNC_RATIO = 0.3
+
+    # words = sentence.split(' ')
+    new_line = []
+
+    q = random.randint(1, int(PUNC_RATIO * len(words) + 1))
+    qs = random.sample(range(0, len(words)), q)
+
+    for j, word in enumerate(words):
+        if j in qs:
+            new_line.append(PUNCTUATIONS[random.randint(0, len(PUNCTUATIONS) -1)])
+            new_line.append(word)
+        else:
+            new_line.append(word)
+    new_line = ' '.join(new_line)
+    return new_line
+  
+def aeda(dataset, tokenizer):
+    # aeda
+    NUM_AUGS = [1, 2, 4, 8]
+    labels = []
+    concat_entity = []
+    sentences = []
+    no_relation_count = Counter(list(dataset['label']))['no_relation']
+    except_labels = set('no_relation')
+
+    for aug in NUM_AUGS:
+        for subj, obj, sentence, label in zip(dataset['subject_entity'], dataset['object_entity'], dataset['sentence'], dataset['label']):
+            # 기본 문장
+            temp = ''
+            temp = subj + '[SEP]' + obj
+            concat_entity.append(temp)
+            sentences.append(sentence)
+            labels.append(label)
+            
+
+            # aeda # no_relation 제외
+            if label != 'no_relation':
+                max_count = no_relation_count
+                for i in range(aug):
+                    if label in list(except_labels):
+                        break
+                    
+                    words = sentence.split(' ')
+                    word_idx = 0
+                    while word_idx < len(words)-1:
+                        if ' ' not in subj and ' ' not in obj:
+                            break
+                        if (words[word_idx] in subj and words[word_idx+1] in subj):
+                            words[word_idx] = ' '.join(words[word_idx:word_idx+2])
+                            words.pop(word_idx+1)
+                        elif (words[word_idx] in subj and subj not in words[word_idx:word_idx+2] and subj in ' '.join(words[word_idx:word_idx+2])):
+                            words[word_idx] = ' '.join(words[word_idx:word_idx+2])
+                            words.pop(word_idx+1)
+                        if (words[word_idx] in obj and words[word_idx+1] in obj):
+                            words[word_idx] = ' '.join(words[word_idx:word_idx+2])
+                            words.pop(word_idx+1)
+                        elif (words[word_idx] in obj and obj not in words[word_idx:word_idx+2] and obj in ' '.join(words[word_idx:word_idx+2])):
+                            words[word_idx] = ' '.join(words[word_idx:word_idx+2])
+                            words.pop(word_idx+1)
+                        else:
+                            word_idx += 1
+
+
+                    concat_entity.append(temp)
+                    labels.append(label)
+                    sentence_aug = insert_punctuation_marks(words)
+                    sentences.append(sentence_aug)
+                label_counts = Counter(labels).most_common()
+                max_count *= 0.4
+
+                for count in label_counts:
+                    if count[1] > max_count:
+                        except_labels.add(count[0])
+
+                
+    tokenized_sentences = tokenizer(
+        concat_entity,
+        sentences,
+        return_tensors="pt",
+        padding=True,
+        truncation=True,
+        max_length=512,
+        add_special_tokens=True,
+        return_token_type_ids=False,
+    )
+
+    return labels, tokenized_sentences
+
 def tokenized_dataset(dataset, tokenizer):
   """ tokenizer에 따라 sentence를 tokenizing 합니다."""
   concat_entity = []

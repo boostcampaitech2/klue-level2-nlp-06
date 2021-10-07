@@ -1,15 +1,15 @@
-  {
-    "wandb":{
-      "name" : "roberta_large_stratified",
-      "tags" : ["ROBERT_LARGE", "stratified", "10epoch"], 
-      "group" : "ROBERT_LARGE"
-    },
+{
+  "wandb":{
+    "name" : "Domain_4000",
+    "tags" : ["ROBERT_LARGE", "stratified", "3epoch", "domain"], 
+    "group" : "Domain_Adaptation"
+  },
 
-    "train":{
+  "train":{
 
-      "TrainingArguments" : {
-        "output_dir":"./results",          
-        "save_total_limit":10,              
+    "TrainingArguments" : {
+      "output_dir":"./results",          
+      "save_total_limit":5,                  
         "save_steps":100,                 
         "num_train_epochs":3,              
         "learning_rate":5e-5,               
@@ -32,7 +32,7 @@
     
 
     "model" :{
-      "huggingface": "klue/roberta-large",
+      "huggingface": "/opt/ml/klue-level2-nlp-06/results/domain_pre_training/checkpoint-4000",
       "config":{
         "num_labels" : 30
       }

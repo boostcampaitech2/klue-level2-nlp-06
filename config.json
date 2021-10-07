@@ -1,8 +1,8 @@
   {
     "wandb":{
-      "name" : "roberta_large_stratified",
-      "tags" : ["ROBERT_LARGE", "stratified", "10epoch"], 
-      "group" : "ROBERT_LARGE"
+      "name" : "roberta_large_stratified_AEDA",
+      "tags" : ["ROBERT_LARGE", "stratified", "3epoch", "AEDA"], 
+      "group" : "ROBERT_LARGE_AEDA"
     },
 
     "train":{
@@ -18,8 +18,8 @@
         "save_steps":100,                 
         "num_train_epochs":3,              
         "learning_rate":5e-5,               
-        "per_device_train_batch_size":38,  
-        "per_device_eval_batch_size":38,   
+        "per_device_train_batch_size":32,  
+        "per_device_eval_batch_size":32,   
         "warmup_steps":500,                
         "weight_decay":0.01,               
         "logging_dir":"./logs",            

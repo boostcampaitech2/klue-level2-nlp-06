@@ -3,6 +3,9 @@ import os
 import pandas as pd
 import torch
 from sklearn.model_selection import StratifiedShuffleSplit
+import copy
+import random
+from koeda import AEDA
 
 class RE_Dataset(torch.utils.data.Dataset):
   """ Dataset 구성을 위한 class."""
@@ -74,4 +77,101 @@ def load_stratified_data(dataset_dir):
   dev_dataset = preprocessing_dataset(strat_dev_set)  
   return train_dataset, dev_dataset
 
-# ddd
+
+def load_stratified_data_AEDA(dataset_dir):
+    pd_dataset, df_valid = load_stratified_data(dataset_dir)
+
+    # 하위 15개
+    df_train = pd_dataset[(pd_dataset['label'] == "per:place_of_death") |
+                                        (pd_dataset['label'] == "org:number_of_employees/members   ") |
+                                        (pd_dataset['label'] == "org:dissolved") |
+                                        (pd_dataset['label'] == "per:schools_attended   ") |
+                                        (pd_dataset['label'] == "per:religion") |
+                                        (pd_dataset['label'] == "org:political/religious_affiliation   ") |
+                                        (pd_dataset['label'] == "per:siblings") |
+                                        (pd_dataset['label'] == "per:product") |
+                                        (pd_dataset['label'] == "org:founded_by") |
+                                        (pd_dataset['label'] == "per:place_of_birth") |
+                                        (pd_dataset['label'] == "per:other_family") |
+                                        (pd_dataset['label'] == "per:place_of_residence") |
+                                        (pd_dataset['label'] == "per:children") |
+                                        (pd_dataset['label'] == "org:product") |
+                                        (pd_dataset['label'] == "per:date_of_death")
+    ]
+
+    aeda = myAEDA(
+        morpheme_analyzer="Mecab", punc_ratio=0.3, punctuations=[".", ",", "!", "?", ";", ":"]
+    )
+    df_train_sen = copy.deepcopy(pd_dataset)
+    for idx, sent in enumerate(df_train['sentence']):
+        se = df_train.iloc[idx]['subject_entity']
+        se = se.strip()[1:-1]
+        ob = df_train.iloc[idx]['object_entity']
+        ob = ob.strip()[1:-1]
+
+        if len(list(map(str, sent.split(se)))) == 2 and len(list(map(str, sent.split(ob)))) == 2 :
+            A, B = map(str, sent.split(se))
+            if ob in A:
+                sentA, sentB = map(str, A.split(ob))
+                sentA = aeda(sentA)
+                sentB = aeda(sentB)
+                B = aeda(B)
+
+                sentence = sentA + se + sentB + ob + B 
+        
+            elif ob in B:
+                sentA, sentB = map(str, B.split(ob))
+                sentA = aeda(sentA)
+                sentB = aeda(sentB)
+                A = aeda(A)
+                sentence = A + se + sentA + ob + sentB
+            if sentence != sent :
+                new_data = {'id': idx, "sentence" : sentence, 'subject_entity': df_train.iloc[idx]['subject_entity'], 
+                            'object_entity' : df_train.iloc[idx]['object_entity'], 'label' : df_train.iloc[idx]['label']}
+                df_train_sen = df_train_sen.append(new_data, ignore_index= True)
+                
+    return df_train_sen, df_valid
+
+
+SPACE_TOKEN = "\u241F"
+def replace_space(text: str) -> str:
+    return text.replace(" ", SPACE_TOKEN)
+
+def revert_space(text: list) -> str:
+    clean = " ".join("".join(text).replace(SPACE_TOKEN, " ").split()).strip()
+    return clean
+
+# AEDA -> 속도문제 보완용 class
+class myAEDA(AEDA):
+    def _aeda(self, data: str, p: float) -> str:
+        if p is None:
+            p = self.ratio
+
+        split_words = self.morpheme_analyzer.morphs(replace_space(data))
+        words = self.morpheme_analyzer.morphs(data)
+
+        new_words = []
+        q = random.randint(1, int(p * len(words) + 1))
+        qs_list = [
+            index
+            for index in range(len(split_words))
+            if split_words[index] != SPACE_TOKEN
+        ]
+        if len(qs_list) < q:
+            q = len(qs_list)
+        qs = random.sample(qs_list, q)
+
+        for j, word in enumerate(split_words):
+            if j in qs:
+                new_words.append(SPACE_TOKEN)
+                new_words.append(
+                    self.punctuations[random.randint(0, len(self.punctuations) - 1)]
+                )
+                new_words.append(SPACE_TOKEN)
+                new_words.append(word)
+            else:
+                new_words.append(word)
+
+        augmented_sentences = revert_space(new_words)
+
+        return augmented_sentences

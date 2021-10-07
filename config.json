@@ -1,11 +1,13 @@
   {
     "wandb":{
-      "name" : "roberta_large_stratified_using_MLM-tok-size-256",
+      "name" : "roberta_large_stratified_no_train",
       "tags" : ["ROBERT_LARGE", "stratified", "10epoch"], 
       "group" : "MLM"
     },
 
     "aug": true,
+
+    "tok_len" : 256,
 
     "train":{
       "focal_loss":{
@@ -18,7 +20,7 @@
         "output_dir":"./results",          
         "save_total_limit":1,              
         "save_steps":100,                 
-        "num_train_epochs":3,              
+        "num_train_epochs":10,              
         "learning_rate":5e-5,               
         "per_device_train_batch_size":38,  
         "per_device_eval_batch_size":38,   
@@ -39,7 +41,7 @@
     
 
     "model" :{
-      "huggingface": "/opt/ml/transformers/examples/pytorch/language-modeling/#",
+      "huggingface": "klue/roberta-large",
       "config":{
         "num_labels" : 30
       }

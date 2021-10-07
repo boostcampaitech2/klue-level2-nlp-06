@@ -142,8 +142,8 @@ def train(args):
     dev_label = label_to_num(dev_dataset['label'].values)
 
     # tokenizing dataset
-    tokenized_train = tokenized_dataset(train_dataset, tokenizer)
-    tokenized_dev = tokenized_dataset(dev_dataset, tokenizer)
+    tokenized_train = tokenized_dataset(train_dataset, tokenizer, args['tok_len'])
+    tokenized_dev = tokenized_dataset(dev_dataset, tokenizer,args['tok_len'])
 
     # make dataset for pytorch.
     RE_train_dataset = RE_Dataset(tokenized_train, train_label)
@@ -191,16 +191,33 @@ def train(args):
 
     # train model
     # trainer.train("/opt/ml/remote/results/roberta_large_stratified_using_MLM_1100_exp/checkpoint-1400")
-    trainer.train()
+    # trainer.train()
+    trainer.evaluate()
     model.save_pretrained('./best_model/' + args['exp_name'])
     wandb.finish()
 
 
 def main():
 
-    # append result output directory and rename with experiment number
+    """
+    done
+        256(roberta-large john na) + 512mlm
+        400
+
+
+    1. 400 + aug
+    2. 256 + aug
+    3. 400 + aug + 512mlm
+    4. 256 + aug + 256mlm
+    
+    """
     output_dir = cfg['train']['TrainingArguments']['output_dir']
+    # append result output directory and rename with experiment number
     exp_name = cfg['wandb']['name']
+
+    
+
+
 
 
     cfg['train']['TrainingArguments']['output_dir'] = output_dir + "/" + exp_name + "_exp"#increment_path(output_dir + "/" + exp_name + "_exp")        
@@ -213,14 +230,76 @@ def main():
             'early_stop': cfg['train']['early_stop']['true'],\
             'patience': cfg['train']['early_stop']['patience'],\
             'focal_loss' : cfg['train']['focal_loss']['true'],\
-            'aug' : cfg['aug']
+            'aug' : cfg['aug'],\
+            'tok_len' : cfg['tok_len']
             }
             
     # wandb.init(id="3fdn2tkl", resume="allow")
+
+
+
+    
+
+
+
     wandb.init(project='klue-RE', name=cfg['wandb']['name'],tags=cfg['wandb']['tags'], group=cfg['wandb']['group'], entity='boostcamp-nlp-06')
     
     train(args)
 
 
 if __name__ == '__main__':
+
+
+    
+    exp_name = cfg['wandb']['name']
+    cfg['aug'] = False
     main()
+    # try:
+    #     cfg['tok_len'] = 256
+    #     cfg['wandb']['name'] = exp_name + "tok_len_"+ str(256) + "mlm_256"
+    #     cfg['model']['huggingface'] = "/opt/ml/transformers/examples/pytorch/language-modeling/mlm_roberta_large_tok_256_900"
+    #     main()
+    #     os.system("rm -rf ./results/roberta_large_stratified*") 
+    # except:
+    #     print("error" + cfg['wandb']['name'] )
+
+    # cfg['aug'] = True
+    # try:
+    #     cfg['tok_len'] = 256
+    #     cfg['wandb']['name'] = exp_name + "_aug_" + "tok_len_"+ str(256) + "mlm_256"
+    #     cfg['model']['huggingface'] = "/opt/ml/transformers/examples/pytorch/language-modeling/mlm_roberta_large_tok_256_900"
+    #     main()
+    #     os.system("rm -rf ./results/roberta_large_stratified*") 
+    # except:
+    #     print("error" + cfg['wandb']['name'] )
+
+    # try:
+    #     cfg['tok_len'] = 400
+    #     cfg['wandb']['name'] = exp_name + "_aug_" + "tok_len_"+ str(400)
+    #     cfg['model']['huggingface'] = "klue/roberta-large"
+    #     main()
+    #     os.system("rm -rf ./results/roberta_large_stratified*") 
+    # except:
+    #     print("error" + cfg['wandb']['name'] )
+    
+    # try:
+
+    #     cfg['tok_len'] = 256
+    #     cfg['wandb']['name'] = exp_name + "_aug_" + "tok_len_"+ str(256)
+    #     cfg['model']['huggingface'] = "klue/roberta-large"
+    #     main()
+    #     os.system("rm -rf ./results/roberta_large_stratified*") 
+    # except:
+    #     print("error" + cfg['wandb']['name'] )
+    
+    # try:
+
+    #     cfg['tok_len'] = 400
+    #     cfg['wandb']['name'] = exp_name + "_aug_" + "tok_len_"+ str(400) + "mlm_512"
+    #     cfg['model']['huggingface'] = "/opt/ml/transformers/examples/pytorch/language-modeling/mlm_roberta_large-1100"
+    #     main()
+    #     os.system("rm -rf ./results/roberta_large_stratified*") 
+    # except:
+    #     print("error" + cfg['wandb']['name'] )
+
+

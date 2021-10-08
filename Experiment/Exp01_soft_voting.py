@@ -10,11 +10,11 @@ label_dict = {0: 'no_relation', 1: 'org:top_members/employees', 2: 'org:members'
               22: 'org:dissolved', 23: 'per:schools_attended', 24: 'per:date_of_death', 25: 'per:date_of_birth',
               26: 'per:place_of_birth', 27: 'per:place_of_death', 28: 'org:founded_by', 29: 'per:religion'}
 
-model_1 = pd.read_csv("./ensemble/fix_error.csv")
-model_2 = pd.read_csv("./ensemble/sep_next.csv")
-model_3 = pd.read_csv("./ensemble/sota1_focal_loss.csv")
-model_4 = pd.read_csv("./ensemble/sota2_hanjin.csv")
-model_5 = pd.read_csv("./ensemble/total_aug.csv")
+model_1 = pd.read_csv("./ensemble_01/fix_error.csv")
+model_2 = pd.read_csv("./ensemble_01/sep_next.csv")
+model_3 = pd.read_csv("./ensemble_01/sota1_focal_loss.csv")
+model_4 = pd.read_csv("./ensemble_01/sota2_hanjin.csv")
+model_5 = pd.read_csv("./ensemble_01/total_aug.csv")
 
 model_all = copy.deepcopy(model_1)
 for i in range(len(model_1)):

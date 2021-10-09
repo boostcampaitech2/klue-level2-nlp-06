@@ -3,6 +3,8 @@ import os
 import pandas as pd
 import torch
 from sklearn.model_selection import StratifiedShuffleSplit
+from collections import Counter
+import random
 
 os.chdir('./KorEDA/')
 from KorEDA.eda import *

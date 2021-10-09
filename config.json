@@ -5,7 +5,17 @@
     "group" : "Domain_Adaptation"
   },
 
-  "train":{
+    "aug_family": false,
+    "type_ent_marker": false,
+    "type_punct":false,
+    "tok_len" : 256,
+
+    "train":{
+      "focal_loss":{
+        "true" : false,
+        "alpha" : 0.1,
+        "gamma" : 0.25
+      },
 
     "TrainingArguments" : {
       "output_dir":"./results",          

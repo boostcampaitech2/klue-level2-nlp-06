@@ -18,7 +18,21 @@ wandb.login()
 
 from config_parser import config as cfg
 
-# code from mask competition
+# Huggingface의 가이드를 따라서 Trainer Class 상속하여 focal loss 구현
+class RE_Trainer(Trainer):
+    def compute_loss(self, model, inputs, return_outputs=False):
+        labels = inputs.get("labels")
+        outputs = model(**inputs)
+        logits = outputs.get('logits')
+
+        # focal loss
+        from focal_loss import FocalLoss
+        loss_fct = FocalLoss(gamma=cfg['train']['focal_loss']['gamma'], alpha = cfg['train']['focal_loss']['alpha'])
+        
+        loss = loss_fct(logits, labels)
+        return (loss, outputs) if return_outputs else loss
+
+# exp 이름을 디렉토리에서 확인하여 실험 번호를 1씩 추가
 def increment_path(path, exist_ok=False):
     """ Automatically increment path, i.e. runs/exp --> runs/exp0, runs/exp1 etc.
     Args:
@@ -89,6 +103,7 @@ def compute_metrics(pred):
 
     class_names = np.arange(30)
 
+    # confusion matrix 기능을 wandb에 추가
     wandb.log({"conf_mat" : wandb.plot.confusion_matrix(probs=None, \
                             y_true=labels, preds=preds, \
                             class_names=class_names)})
@@ -122,14 +137,26 @@ def train(args):
     
 
     # load dataset
-    train_dataset, dev_dataset = load_stratified_data("../dataset/train/train.csv")
+    train_dataset, dev_dataset = load_stratified_data("../dataset/train/train.csv", \
+                                                     aug_family = args['aug_family'], \
+                                                     type_ent_marker = args['type_ent_marker'],\
+                                                     type_punct = args['type_punct'])
 
     train_label = label_to_num(train_dataset['label'].values)
     dev_label = label_to_num(dev_dataset['label'].values)
 
     # tokenizing dataset
+    tokenized_train = tokenized_dataset(train_dataset, tokenizer, args['tok_len'])
+    tokenized_dev = tokenized_dataset(dev_dataset, tokenizer,args['tok_len'])
+
+    # customAeda
+    '''
+    실행시 아래 두 코드 주석처리 필요
+    train_label = label_to_num(train_dataset['label'].values)
     tokenized_train = tokenized_dataset(train_dataset, tokenizer)
-    tokenized_dev = tokenized_dataset(dev_dataset, tokenizer)
+    '''
+    # train_label_string, tokenized_train = customAeda(train_dataset, tokenizer)
+    # train_label = label_to_num(train_label_string)
 
     # make dataset for pytorch.
     RE_train_dataset = RE_Dataset(tokenized_train, train_label)
@@ -141,6 +168,7 @@ def train(args):
     # setting model hyperparameter
     model_config = AutoConfig.from_pretrained(MODEL_NAME)
     
+    # 모델의 config을 config parser에서 추출하여 자동으로 적용
     for c, val in cfg['model']['config'].items():
         setattr(model_config, c, val)
 
@@ -160,7 +188,12 @@ def train(args):
     if args['early_stop']:
         callbacks_list.append( EarlyStoppingCallback(early_stopping_patience = args['patience']) )
 
-    trainer = Trainer(
+    #  focal loss을 적용할 여부에 따라 다른 Trainer object을 사용함. 
+    trainer_container = Trainer
+    if args['focal_loss']:
+        trainer_container = RE_Trainer
+
+    trainer = trainer_container(
         model=model,                         # the instantiated 🤗 Transformers model to be trained
         args=training_args,                  # training arguments, defined above
         train_dataset=RE_train_dataset,         # training dataset
@@ -177,22 +210,27 @@ def train(args):
 
 def main():
 
-    # append result output directory and rename with experiment number
     output_dir = cfg['train']['TrainingArguments']['output_dir']
+    # append result output directory and rename with experiment number
     exp_name = cfg['wandb']['name']
 
-    cfg['train']['TrainingArguments']['output_dir'] = increment_path(output_dir + "/" + exp_name + "_exp")        
+    
+    cfg['train']['TrainingArguments']['output_dir'] = output_dir + "/" + exp_name + "_exp"#increment_path(output_dir + "/" + exp_name + "_exp")        
     cfg['wandb']['name'] = cfg['train']['TrainingArguments']['output_dir'].split("/")[-1]
     print(cfg['wandb']['name'])
     print(cfg['train']['TrainingArguments']['output_dir'])
 
     args = {'training_arg' : cfg['train']['TrainingArguments'], \
             'exp_name' : exp_name,\
-            'early_stop': cfg['train']['early_stop']['true']}
-
-    #early stop
-    if cfg['train']['early_stop']['true']:
-        args['patience'] =  cfg['train']['early_stop']['patience']
+            'early_stop': cfg['train']['early_stop']['true'],\
+            'patience': cfg['train']['early_stop']['patience'],\
+            'focal_loss' : cfg['train']['focal_loss']['true'],\
+            'aug_family' : cfg['aug_family'],\
+            'type_ent_marker' : cfg['type_ent_marker'],\
+            'type_punct' : cfg['type_punct'],\
+            'tok_len' : cfg['tok_len']
+            }
+            
 
     wandb.init(project='klue-RE', name=cfg['wandb']['name'],tags=cfg['wandb']['tags'], group=cfg['wandb']['group'], entity='boostcamp-nlp-06')
     
@@ -200,4 +238,6 @@ def main():
 
 
 if __name__ == '__main__':
+    
     main()
+

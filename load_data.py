@@ -7,7 +7,6 @@ import copy
 import random
 from koeda import AEDA
 from collections import Counter
-from tqdm import tqdm
 
 os.chdir('./KorEDA/')
 from KorEDA.eda import *
@@ -268,7 +267,7 @@ def customAeda(dataset, tokenizer):
   no_relation_count = Counter(list(dataset['label']))['no_relation'] # no_relation 데이터 수
   except_labels = set('no_relation')
 
-  for aug in tqdm(NUM_AUGS):
+  for aug in NUM_AUGS:
     for subj, obj, sentence, label in zip(dataset['subject_entity'], dataset['object_entity'], dataset['sentence'], dataset['label']):
       # 기존 문장 추가
       temp = ''
@@ -318,7 +317,7 @@ def customAeda(dataset, tokenizer):
           sentence_aug = insert_punctuation_marks(words) # sentence에 puhctuation marks를 넣음
           sentences.append(sentence_aug) 
         label_counts = Counter(labels).most_common()
-        max_count *= 0.4 # augmantation 기준
+        max_count *= 0.6 # augmantation 기준
 
         for count in label_counts:
           if count[1] > max_count: # max_count 보다 많은 데이터를 가진 label에 해당하면 augmantation 하지 않음
@@ -327,7 +326,7 @@ def customAeda(dataset, tokenizer):
           
   tokenized_sentences = tokenizer(
       concat_entity,
-      list(dataset['sentence']),
+      sentences,
       return_tensors="pt",
       padding=True,
       truncation=True,
@@ -335,7 +334,7 @@ def customAeda(dataset, tokenizer):
       add_special_tokens=True,
       return_token_type_ids=False,
       )
-  return tokenized_sentences
+  return labels, tokenized_sentences
 
 
 def augmentation(target_set):

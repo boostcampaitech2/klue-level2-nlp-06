@@ -202,10 +202,6 @@ def train(args):
     # https://huggingface.co/transformers/main_classes/trainer.html#trainingarguments 참고해주세요.
     training_args = TrainingArguments(**args['training_arg'])
 
-    # xlm-roberta-large train args
-    if args['xlm']:
-        training_args = cfg['train']['xlm']['TrainingArguments'](**args['training_arg'])
-
     # early stop argument
     callbacks_list = []
     if args['early_stop']:
@@ -254,6 +250,10 @@ def main():
             'tok_len' : cfg['tok_len'],
             'xlm' : cfg['xlm']
             }           
+
+    # xlm-roberta-large train args
+    if args['xlm']:
+        args['training_args'] = cfg['train']['xlm']['TrainingArguments']
 
     #early stop
     if cfg['train']['early_stop']['true']:

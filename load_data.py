@@ -26,30 +26,30 @@ def preprocessing_dataset(dataset):
   """ 처음 불러온 csv 파일을 원하는 형태의 DataFrame으로 변경 시켜줍니다."""
   subject_entity = []
   object_entity = []
-  good_flag = False
-  bad_flag = False
+  # good_flag = False
+  # bad_flag = False
   for i,j in zip(dataset['subject_entity'], dataset['object_entity']):
 
 
-    try:
-      if not good_flag:
-        good_flag = True
-        print("good case")
-        print(i)
-        print(j)
-        print(type(i))
+    # try:
+    #   if not good_flag:
+    #     good_flag = True
+    #     print("good case")
+    #     print(i)
+    #     print(j)
+    #     print(type(i))
       i = i[1:-1].split(',')[0].split(':')[1]
       j = j[1:-1].split(',')[0].split(':')[1]
 
       subject_entity.append(i)
       object_entity.append(j)
-    except:
-      if not bad_flag:
-        print("bad case")
-        bad_flag = True
-        print(i)
-        print(j)
-        print(type(i))
+    # except:
+    #   if not bad_flag:
+    #     print("bad case")
+    #     bad_flag = True
+    #     print(i)
+    #     print(j)
+    #     print(type(i))
   out_dataset = pd.DataFrame({'id':dataset['id'], 'sentence':dataset['sentence'],'subject_entity':subject_entity,'object_entity':object_entity,'label':dataset['label'],})
   duplied = out_dataset[out_dataset.duplicated(subset=['sentence','subject_entity','object_entity'])]
   duplied_no_idx = duplied[duplied['label'] == 'no_relation']['id'].to_list()
@@ -65,7 +65,7 @@ def load_data(dataset_dir):
   
   return dataset
 
-def tokenized_dataset(dataset, tokenizer):
+def tokenized_dataset(dataset, tokenizer, tok_len):
   """ tokenizer에 따라 sentence를 tokenizing 합니다."""
   concat_entity = []
   for e01, e02 in zip(dataset['subject_entity'], dataset['object_entity']):
@@ -78,7 +78,7 @@ def tokenized_dataset(dataset, tokenizer):
       return_tensors="pt",
       padding=True,
       truncation=True,
-      max_length=256,
+      max_length=tok_len,
       add_special_tokens=True,
       return_token_type_ids=False,
       )

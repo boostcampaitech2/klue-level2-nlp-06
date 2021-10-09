@@ -56,7 +56,7 @@ def load_test_dataset(dataset_dir, tokenizer):
   test_dataset = load_data(dataset_dir)
   test_label = list(map(int,test_dataset['label'].values))
   # tokenizing dataset
-  tokenized_test = tokenized_dataset(test_dataset, tokenizer)
+  tokenized_test = tokenized_dataset(test_dataset, tokenizer, 256)
   return test_dataset['id'], tokenized_test, test_label
 
 def main(args):
@@ -95,7 +95,7 @@ if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   
   # model dir
-  parser.add_argument('--model_dir', type=str, default="results/roberta_base_stratified_exp/checkpoint-2000")
+  parser.add_argument('--model_dir', type=str, default="best_model/roberta_large_stratified_len_400tok_len_256mlm_256")
   args = parser.parse_args()
   print(args)
   main(args)

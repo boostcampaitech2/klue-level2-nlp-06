@@ -8,7 +8,7 @@ from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_sc
 from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments, RobertaConfig, RobertaTokenizer, RobertaForSequenceClassification, BertTokenizer, EarlyStoppingCallback
 from load_data import *
 import random
-# import wandb
+import wandb
 from pathlib import Path
 import glob
 import re
@@ -134,65 +134,64 @@ def train(args):
 
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
     
-
     # load dataset
     train_dataset, dev_dataset = load_stratified_data_AEDA("/content/klueee/train.csv")
-    print(train_dataset.head())
-    # train_label = label_to_num(train_dataset['label'].values)
-    # dev_label = label_to_num(dev_dataset['label'].values)
 
-    # # tokenizing dataset
-    # tokenized_train = tokenized_dataset(train_dataset, tokenizer)
-    # tokenized_dev = tokenized_dataset(dev_dataset, tokenizer)
+    train_label = label_to_num(train_dataset['label'].values)
+    dev_label = label_to_num(dev_dataset['label'].values)
 
-    # # make dataset for pytorch.
-    # RE_train_dataset = RE_Dataset(tokenized_train, train_label)
-    # RE_dev_dataset = RE_Dataset(tokenized_dev, dev_label)
+    # tokenizing dataset
+    tokenized_train = tokenized_dataset(train_dataset, tokenizer)
+    tokenized_dev = tokenized_dataset(dev_dataset, tokenizer)
 
-    # device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    # make dataset for pytorch.
+    RE_train_dataset = RE_Dataset(tokenized_train, train_label)
+    RE_dev_dataset = RE_Dataset(tokenized_dev, dev_label)
 
-    # print(device)
-    # # setting model hyperparameter
-    # model_config = AutoConfig.from_pretrained(MODEL_NAME)
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
+    print(device)
+    # setting model hyperparameter
+    model_config = AutoConfig.from_pretrained(MODEL_NAME)
     
-    # for c, val in cfg['model']['config'].items():
-    #     setattr(model_config, c, val)
+    for c, val in cfg['model']['config'].items():
+        setattr(model_config, c, val)
 
-    # model = AutoModelForSequenceClassification.from_pretrained(
-    #     MODEL_NAME, config=model_config)
-    # print(model.config)
+    model = AutoModelForSequenceClassification.from_pretrained(
+        MODEL_NAME, config=model_config)
+    print(model.config)
 
-    # model.parameters
-    # model.to(device)
+    model.parameters
+    model.to(device)
 
-    # # 사용한 option 외에도 다양한 option들이 있습니다.
-    # # https://huggingface.co/transformers/main_classes/trainer.html#trainingarguments 참고해주세요.
-    # training_args = TrainingArguments(**args['training_arg'])
+    # 사용한 option 외에도 다양한 option들이 있습니다.
+    # https://huggingface.co/transformers/main_classes/trainer.html#trainingarguments 참고해주세요.
+    training_args = TrainingArguments(**args['training_arg'])
 
-    # # early stop argument
-    # callbacks_list = []
-    # if args['early_stop']:
-    #     callbacks_list.append( EarlyStoppingCallback(early_stopping_patience = args['patience']) )
+    # early stop argument
+    callbacks_list = []
+    if args['early_stop']:
+        callbacks_list.append( EarlyStoppingCallback(early_stopping_patience = args['patience']) )
 
-    # # function pointer to contain Trainer class constructor
-    # trainer_container = Trainer
+    # function pointer to contain Trainer class constructor
+    trainer_container = Trainer
 
-    # if args['focal_loss']:
-    #     trainer_container = RE_Trainer
+    if args['focal_loss']:
+        trainer_container = RE_Trainer
 
-    # trainer = trainer_container(
-    #     model=model,                         # the instantiated 🤗 Transformers model to be trained
-    #     args=training_args,                  # training arguments, defined above
-    #     train_dataset=RE_train_dataset,         # training dataset
-    #     eval_dataset=RE_dev_dataset,             # evaluation dataset
-    #     compute_metrics=compute_metrics,         # define metrics function
-    #     callbacks = callbacks_list
-    # )
+    trainer = trainer_container(
+        model=model,                         # the instantiated 🤗 Transformers model to be trained
+        args=training_args,                  # training arguments, defined above
+        train_dataset=RE_train_dataset,         # training dataset
+        eval_dataset=RE_dev_dataset,             # evaluation dataset
+        compute_metrics=compute_metrics,         # define metrics function
+        callbacks = callbacks_list
+    )
 
-    # # train model
-    # trainer.train()
-    # model.save_pretrained('./best_model/' + args['exp_name'])
-    # wandb.finish()
+    # train model
+    trainer.train()
+    model.save_pretrained('./best_model/' + args['exp_name'])
+    wandb.finish()
 
 
 def main():
@@ -213,7 +212,7 @@ def main():
             'focal_loss' : cfg['train']['focal_loss']['true']    
             }
 
-    # wandb.init(project='klue-RE', name=cfg['wandb']['name'],tags=cfg['wandb']['tags'], group=cfg['wandb']['group'], entity='boostcamp-nlp-06')
+    wandb.init(project='klue-RE', name=cfg['wandb']['name'],tags=cfg['wandb']['tags'], group=cfg['wandb']['group'], entity='boostcamp-nlp-06')
     
     train(args)
 

@@ -99,7 +99,7 @@ def load_stratified_data_AEDA(dataset_dir):
                                         (pd_dataset['label'] == "per:date_of_death")
     ]
 
-    aeda = myAEDA(
+    aeda = AEDA(
         morpheme_analyzer="Mecab", punc_ratio=0.3, punctuations=[".", ",", "!", "?", ";", ":"]
     )
     df_train_sen = copy.deepcopy(pd_dataset)
@@ -131,47 +131,3 @@ def load_stratified_data_AEDA(dataset_dir):
                 df_train_sen = df_train_sen.append(new_data, ignore_index= True)
                 
     return df_train_sen, df_valid
-
-
-SPACE_TOKEN = "\u241F"
-def replace_space(text: str) -> str:
-    return text.replace(" ", SPACE_TOKEN)
-
-def revert_space(text: list) -> str:
-    clean = " ".join("".join(text).replace(SPACE_TOKEN, " ").split()).strip()
-    return clean
-
-# AEDA -> 속도문제 보완용 class
-class myAEDA(AEDA):
-    def _aeda(self, data: str, p: float) -> str:
-        if p is None:
-            p = self.ratio
-
-        split_words = self.morpheme_analyzer.morphs(replace_space(data))
-        words = self.morpheme_analyzer.morphs(data)
-
-        new_words = []
-        q = random.randint(1, int(p * len(words) + 1))
-        qs_list = [
-            index
-            for index in range(len(split_words))
-            if split_words[index] != SPACE_TOKEN
-        ]
-        if len(qs_list) < q:
-            q = len(qs_list)
-        qs = random.sample(qs_list, q)
-
-        for j, word in enumerate(split_words):
-            if j in qs:
-                new_words.append(SPACE_TOKEN)
-                new_words.append(
-                    self.punctuations[random.randint(0, len(self.punctuations) - 1)]
-                )
-                new_words.append(SPACE_TOKEN)
-                new_words.append(word)
-            else:
-                new_words.append(word)
-
-        augmented_sentences = revert_space(new_words)
-
-        return augmented_sentences

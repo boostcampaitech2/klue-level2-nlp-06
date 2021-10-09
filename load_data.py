@@ -10,6 +10,119 @@ os.chdir('./KorEDA/')
 from KorEDA.eda import *
 os.chdir('../')
 
+type_tag_dict = {
+      'PER' : '</PER>', 
+      'ORG' : '</ORG>', 
+      'LOC' : '</LOC>',
+      'DAT' : '</DAT>',
+      'POH' : '</POH>', 
+      'NOH' : '</NOH>'
+    }
+
+def label_to_num(label):
+  num_label = []
+  with open('dict_label_to_num.pkl', 'rb') as f:
+    dict_label_to_num = pickle.load(f)
+  for v in label:
+    num_label.append(dict_label_to_num[v])
+  
+  return num_label
+def add_special_token(tokenizer, special_token):
+  token_dict={
+    "none" : [],
+    "entity" : ['<obj>', '</obj>', '<subj>', '</subj>'],
+    "type" : ['<PER>', '<ORG>', '<LOC>', '<DAT>', '<POH>', '<NOH>'],
+    "entity&token" : ['<obj>', '</obj>', '<subj>', '</subj>', '</PER>', '</ORG>', '</LOC>', '</DAT>', '</POH>', '</NOH>'],
+    "all" : ['<obj>', '</obj>', '<subj>', '</subj>', '</PER>', '</ORG>', '</LOC>', '</DAT>', '</POH>', '</NOH>', '<wikipedia>', '<wikitree>', '<policy_briefing>'], 
+  }  
+  entity_special_tokens = {'additional_special_tokens': token_dict[special_token]}    
+  num_additional_special_tokens=  tokenizer.add_special_tokens(entity_special_tokens)    
+  return tokenizer
+def add_special_tokens_to_sentence(sentence, object_entity, subject_entity, source, special_token):
+    obj_start_idx, obj_end_idx = object_entity['start_idx'], object_entity['end_idx']
+    subj_start_idx, subj_end_idx = subject_entity['start_idx'], subject_entity['end_idx']    
+    obj_type = type_tag_dict[object_entity['type']]
+    sbj_type = type_tag_dict[subject_entity['type']]    
+    source_tag = '<'+source+'>'
+    if special_token=='entity' :
+      if obj_start_idx < subj_start_idx:
+          new_sentence = sentence[:obj_start_idx] + '<obj>' + sentence[obj_start_idx:obj_end_idx+1] + '</obj>' + \
+                        sentence[obj_end_idx+1:subj_start_idx] +'<subj>'+sentence[subj_start_idx:subj_end_idx+1] + \
+                        '</subj>' + sentence[subj_end_idx+1:]
+      else:
+          new_sentence = sentence[:subj_start_idx] + '<subj>' + sentence[subj_start_idx:subj_end_idx+1] + '</subj>' + \
+                        sentence[subj_end_idx+1:obj_start_idx] + '<obj>'+ sentence[obj_start_idx:obj_end_idx+1] + \
+                        '</obj>' + sentence[obj_end_idx+1:]    
+    elif special_token=='type' :
+      if obj_start_idx < subj_start_idx:
+          new_sentence = sentence[:obj_start_idx] + obj_type + sentence[obj_start_idx:obj_end_idx+1] + \
+                        sentence[obj_end_idx+1:subj_start_idx] +sbj_type +sbj_type+sentence[subj_start_idx:subj_end_idx+1] + \
+                        + sentence[subj_end_idx+1:]
+      else:
+          new_sentence = sentence[:subj_start_idx] + sbj_type + sentence[subj_start_idx:subj_end_idx+1] + \
+                        sentence[subj_end_idx+1:obj_start_idx] + obj_type+ obj_type+ sentence[obj_start_idx:obj_end_idx+1] + \
+                         + sentence[obj_end_idx+1:]   
+    elif special_token=='entity&type' :
+      if obj_start_idx < subj_start_idx:
+          new_sentence = sentence[:obj_start_idx] + '<obj>'+obj_type + sentence[obj_start_idx:obj_end_idx+1] + '</obj>' + \
+                        sentence[obj_end_idx+1:subj_start_idx] +'<subj>'+ sbj_type+sentence[subj_start_idx:subj_end_idx+1] + \
+                        '</subj>' + sentence[subj_end_idx+1:]
+      else:
+          new_sentence = sentence[:subj_start_idx] + '<subj>'+sbj_type + sentence[subj_start_idx:subj_end_idx+1] + '</subj>' + \
+                        sentence[subj_end_idx+1:obj_start_idx] + '<obj>'+obj_type+ sentence[obj_start_idx:obj_end_idx+1] + \
+                        '</obj>' + sentence[obj_end_idx+1:] 
+    elif special_token=='all' :
+      if obj_start_idx < subj_start_idx:
+          new_sentence = source_tag+sentence[:obj_start_idx] + '<obj>'+obj_type + sentence[obj_start_idx:obj_end_idx+1] + '</obj>' + \
+                        sentence[obj_end_idx+1:subj_start_idx] +'<subj>'+ sbj_type+sentence[subj_start_idx:subj_end_idx+1] + \
+                        '</subj>' + sentence[subj_end_idx+1:]
+      else:
+          new_sentence = source_tag+sentence[:subj_start_idx] + '<subj>'+sbj_type + sentence[subj_start_idx:subj_end_idx+1] + '</subj>' + \
+                        sentence[subj_end_idx+1:obj_start_idx] + '<obj>'+obj_type+ sentence[obj_start_idx:obj_end_idx+1] + \
+                        '</obj>' + sentence[obj_end_idx+1:] 
+    else :
+      new_sentence= sentence   
+    return new_sentence
+def make_info_entity(object_entity, subject_entity, source, type):
+    obj_start_idx, obj_end_idx = object_entity['start_idx'], object_entity['end_idx']
+    subj_start_idx, subj_end_idx = subject_entity['start_idx'], subject_entity['end_idx']  
+    obj_type = type_tag_dict[object_entity['type']]
+    subj_type = type_tag_dict[subject_entity['type']]    
+    source_tag = '<'+source+'>'
+    entity = ''
+    '''     
+    entity,type, entity&type, all
+    '''
+    obj_token = '<obj>'+object_entity['word'] +'</obj>'
+    subj_token = '<subj>'+subject_entity['word'] +'</subj>'
+    if type =='entity&type':
+      if obj_start_idx < subj_start_idx:
+        entity=obj_token+obj_type+subj_token+subj_type
+      else :
+        entity=subj_token+subj_type+obj_token+obj_type
+    elif type=='entity':
+      if obj_start_idx < subj_start_idx:
+        entity=obj_token+subj_token
+      else :
+        entity=subj_token+obj_token
+    elif type=='all' :
+      if obj_start_idx < subj_start_idx:
+        entity=source_tag+obj_token+subj_token
+      else :
+        entity=source_tag+subj_token+obj_token
+    return entity
+def read_klue_re(dataset, type):
+    sentences = []
+    entites = []
+    labels = [] 
+    for temp in dataset.iterrows():
+        data=temp[1]
+        sentence = add_special_tokens_to_sentence(data['sentence'], data['object_entity_dict'], data['subject_entity_dict'], data['source'], type['sentence'])
+        entity = make_info_entity(data['object_entity_dict'], data['subject_entity_dict'], data['source'], type['entityInfo'])        
+        sentences.append(sentence)
+        entites.append(entity)
+        labels.append(data['label'])
+    return sentences, entites
 class RE_Dataset(torch.utils.data.Dataset):
   """ Dataset 구성을 위한 class."""
   def __init__(self, pair_dataset, labels):
@@ -20,6 +133,8 @@ class RE_Dataset(torch.utils.data.Dataset):
     item = {key: val[idx].clone().detach() for key, val in self.pair_dataset.items()}
     item['labels'] = torch.tensor(self.labels[idx])
     return item
+  def get_labels(self):
+    return self.labels
 
   def __len__(self):
     return len(self.labels)
@@ -27,14 +142,21 @@ class RE_Dataset(torch.utils.data.Dataset):
 def preprocessing_dataset(dataset):
   """ 처음 불러온 csv 파일을 원하는 형태의 DataFrame으로 변경 시켜줍니다."""
   subject_entity = []
+  subject_entity_dict = []
   object_entity = []
-  for i,j in zip(dataset['subject_entity'], dataset['object_entity']):
-      i = i[1:-1].split(',')[0].split(':')[1]
-      j = j[1:-1].split(',')[0].split(':')[1]
-      subject_entity.append(i)
-      object_entity.append(j)
-
-  out_dataset = pd.DataFrame({'id':dataset['id'], 'sentence':dataset['sentence'],'subject_entity':subject_entity,'object_entity':object_entity,'label':dataset['label'],})
+  object_entity_dict = []
+  for i,j in zip(dataset['subject_entity'], dataset['object_entity']):    
+    subject_entity_dict.append(eval(i))    
+    object_entity_dict.append(eval(i))
+    i = i[1:-1].split(',')[0].split(':')[1]
+    j = j[1:-1].split(',')[0].split(':')[1]    
+    subject_entity.append(i)
+    object_entity.append(j)
+  out_dataset = pd.DataFrame({'id':dataset['id'], 'sentence':dataset['sentence'],
+                              'subject_entity':subject_entity,'object_entity':object_entity,
+                              'label':dataset['label'], 'source' : dataset['source'],
+                              'subject_entity_dict':subject_entity_dict,'object_entity_dict':object_entity_dict,
+                              })
   duplied = out_dataset[out_dataset.duplicated(subset=['sentence','subject_entity','object_entity'])]
   duplied_no_idx = duplied[duplied['label'] == 'no_relation']['id'].to_list()
   for idx in duplied_no_idx:
@@ -147,24 +269,38 @@ def customAeda(dataset, tokenizer):
 
   return labels, tokenized_sentences
 
-def tokenized_dataset(dataset, tokenizer, tok_len):
+def tokenized_dataset(dataset, tokenizer, tok_len, type):
   """ tokenizer에 따라 sentence를 tokenizing 합니다."""
   concat_entity = []
-  for e01, e02 in zip(dataset['subject_entity'], dataset['object_entity']):
-    temp = ''
-    temp = e01 + '[SEP]' + e02
-    concat_entity.append(temp)
-  tokenized_sentences = tokenizer(
-      concat_entity,
-      list(dataset['sentence']),
-      return_tensors="pt",
-      padding=True,
-      truncation=True,
-      max_length=tok_len,
-      add_special_tokens=True,
-      return_token_type_ids=False,
-      )
-  return tokenized_sentences
+  if type['active'] : 
+    sentences, entities = read_klue_re(dataset, type)
+    tokenizer = add_special_token(tokenizer, type['entityInfo'])
+    tokenized_sentences =tokenizer(
+                        sentences,
+                        entities,
+                        return_tensors="pt",
+                        padding=True,
+                        truncation=True,
+                        max_length=514,
+                        add_special_tokens=True,
+                        return_token_type_ids=False,
+                        )  
+  else : 
+    for e01, e02 in zip(dataset['subject_entity'], dataset['object_entity']):
+      temp = ''
+      temp = e01 + '[SEP]' + e02
+      concat_entity.append(temp)
+    tokenized_sentences = tokenizer(
+        concat_entity,
+        list(dataset['sentence']),
+        return_tensors="pt",
+        padding=True,
+        truncation=True,
+        max_length=tok_len,
+        add_special_tokens=True,
+        return_token_type_ids=False,
+        )   
+  return tokenized_sentences, len(tokenizer)  
 
 
 def augmentation(target_set):
@@ -334,4 +470,3 @@ def load_stratified_data(dataset_dir, aug_family = False, type_ent_marker = Fals
   train_dataset = preprocessing_dataset(strat_train_set)  
   dev_dataset = preprocessing_dataset(strat_dev_set)  
   return train_dataset, dev_dataset
-

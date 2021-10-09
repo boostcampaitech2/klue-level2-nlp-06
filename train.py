@@ -8,13 +8,13 @@ from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_sc
 from transformers import AutoTokenizer, AutoConfig, AutoModelForSequenceClassification, Trainer, TrainingArguments, RobertaConfig, RobertaTokenizer, RobertaForSequenceClassification, BertTokenizer, EarlyStoppingCallback
 from load_data import *
 import random
-import wandb
+# import wandb
 from pathlib import Path
 import glob
 import re
 
 
-wandb.login()
+# wandb.login()
 
 from config_parser import config as cfg
 
@@ -136,8 +136,8 @@ def train(args):
     
 
     # load dataset
-    train_dataset, dev_dataset = load_stratified_data_AEDA("../dataset/train/train.csv")
-    print("finish")
+    train_dataset, dev_dataset = load_stratified_data_AEDA("C:/Users/timeo/Desktop/Boostcamp/KLUE/dataset/train/train.csv")
+    print(train_dataset.head())
     # train_label = label_to_num(train_dataset['label'].values)
     # dev_label = label_to_num(dev_dataset['label'].values)
 

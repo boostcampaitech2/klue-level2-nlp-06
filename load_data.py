@@ -77,11 +77,11 @@ def load_stratified_data(dataset_dir):
   dev_dataset = preprocessing_dataset(strat_dev_set)  
   return train_dataset, dev_dataset
 
-
+# AEDA를 사용하기 위한 data load 함수
 def load_stratified_data_AEDA(dataset_dir):
     pd_dataset, df_valid = load_stratified_data(dataset_dir)
 
-    # 하위 15개
+    # 개수가 적은 15개의 label만 따로 빼기
     df_train = pd_dataset[(pd_dataset['label'] == "per:place_of_death") |
                                         (pd_dataset['label'] == "org:number_of_employees/members   ") |
                                         (pd_dataset['label'] == "org:dissolved") |
@@ -99,7 +99,7 @@ def load_stratified_data_AEDA(dataset_dir):
                                         (pd_dataset['label'] == "per:date_of_death")
     ]
 
-    aeda = AEDA(
+    aeda = myAEDA(
         morpheme_analyzer="Mecab", punc_ratio=0.3, punctuations=[".", ",", "!", "?", ";", ":"]
     )
     df_train_sen = copy.deepcopy(pd_dataset)
@@ -116,7 +116,6 @@ def load_stratified_data_AEDA(dataset_dir):
                 sentA = aeda(sentA)
                 sentB = aeda(sentB)
                 B = aeda(B)
-
                 sentence = sentA + se + sentB + ob + B 
         
             elif ob in B:
@@ -125,9 +124,56 @@ def load_stratified_data_AEDA(dataset_dir):
                 sentB = aeda(sentB)
                 A = aeda(A)
                 sentence = A + se + sentA + ob + sentB
+
             if sentence != sent :
                 new_data = {'id': idx, "sentence" : sentence, 'subject_entity': df_train.iloc[idx]['subject_entity'], 
                             'object_entity' : df_train.iloc[idx]['object_entity'], 'label' : df_train.iloc[idx]['label']}
                 df_train_sen = df_train_sen.append(new_data, ignore_index= True)
                 
     return df_train_sen, df_valid
+
+
+SPACE_TOKEN = "\u241F"
+
+
+def replace_space(text: str) -> str:
+  return text.replace(" ", SPACE_TOKEN)
+
+
+def revert_space(text: list) -> str:
+  clean = " ".join("".join(text).replace(SPACE_TOKEN, " ").split()).strip()
+  return clean
+
+
+# 이거 불러와서 AEDA 처럼 쓰시면 됩니다.
+class myAEDA(AEDA):
+  def _aeda(self, data: str, p: float) -> str:
+      if p is None:
+          p = self.ratio
+
+      split_words = self.morpheme_analyzer.morphs(replace_space(data))
+      words = self.morpheme_analyzer.morphs(data)
+
+      new_words = []
+      qs_list = [
+          index
+          for index in range(len(split_words))
+          if split_words[index] != SPACE_TOKEN
+      ]
+      q = random.randint(1, int(p * len(qs_list) + 1))
+      qs = random.sample(qs_list, q)
+
+      for j, word in enumerate(split_words):
+          if j in qs:
+              new_words.append(SPACE_TOKEN)
+              new_words.append(
+                  self.punctuations[random.randint(0, len(self.punctuations) - 1)]
+              )
+              new_words.append(SPACE_TOKEN)
+              new_words.append(word)
+          else:
+              new_words.append(word)
+
+      augmented_sentences = revert_space(new_words)
+
+      return augmented_sentences

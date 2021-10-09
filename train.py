@@ -146,8 +146,12 @@ def train(args):
     seed_everything(2021) # fix seed to current year
 
     # load model and tokenizer
-    # MODEL_NAME = "bert-base-uncased"
+    # MODEL_NAME = "roberta-large"
     MODEL_NAME = cfg['model']['huggingface']
+
+    # xlm-roberta-large model
+    if args['xlm']:
+        MODEL_NAME = cfg['model']['xlm']
 
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
     
@@ -243,14 +247,22 @@ def main():
             'aug_family' : cfg['aug_family'],\
             'type_ent_marker' : cfg['type_ent_marker'],\
             'type_punct' : cfg['type_punct'],\
-            'tok_len' : cfg['tok_len']
+            'tok_len' : cfg['tok_len'],
+            'xlm' : cfg['xlm']
             }           
+
+    # xlm-roberta-large train args
+    if args['xlm']:
+        args['training_args'] = cfg['train']['xlm']['TrainingArguments']
 
     #early stop
     if cfg['train']['early_stop']['true']:
         args['patience'] =  cfg['train']['early_stop']['patience']
 
-    wandb.init(project='klue-RE', name=cfg['wandb']['name'],tags=cfg['wandb']['tags'], group=cfg['wandb']['group'], entity='boostcamp-nlp-06')
+    if args['xlm']:
+        wandb.init(project='klue-RE', name=cfg['wandb']['xlm']['name'],tags=cfg['wandb']['xlm']['tags'], group=cfg['wandb']['xlm']['group'])
+    else:
+        wandb.init(project='klue-RE', name=cfg['wandb']['name'],tags=cfg['wandb']['tags'], group=cfg['wandb']['group'])
     
     train(args)
 

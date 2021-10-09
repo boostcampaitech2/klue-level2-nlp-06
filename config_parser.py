@@ -1,6 +1,6 @@
 import json
 
-with open('config2.json') as f:
+with open('config.json') as f:
     config = json.load(f)
 
 # Instruction:

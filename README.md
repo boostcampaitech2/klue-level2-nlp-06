@@ -40,8 +40,10 @@ RE is a task to identify semantic relations between entity pairs in a text. The 
 1. [Prerequisites Installatioin](#prerequisites-installatioin)
 2. [Quick Start](#quick-start)
 3. [Advanced Examples](#advanced-examples)
-4. [Code Structure](#code-structure)
+4. [Model Architecture](#code-structure)
+
 5. [Augmenters](#augmenters)
+
 6. [Contributor](#contributor)
 
 

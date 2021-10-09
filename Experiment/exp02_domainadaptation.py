@@ -11,8 +11,8 @@ from transformers import AutoTokenizer, AutoModelForMaskedLM
 
 """## 1. Data Load & Preprocessing"""
 
-train_dir = '../dataset/train/train.csv'
-test_dir = '../dataset/test/test_data.csv'
+train_dir = '../../dataset/train/train.csv'
+test_dir = '../../dataset/test/test_data.csv'
 
 pd_dataset = pd.read_csv(train_dir)
 pd_dataset['sentence'].to_csv('data_sentence.txt', index=False, header=False, encoding='utf-8')
@@ -121,14 +121,14 @@ training_args = TrainingArguments(
     output_dir="./results/domain_pre_training",
     overwrite_output_dir=True,
     max_steps=100,
-    per_device_train_batch_size=8,
-    per_device_eval_batch_size=16,
+    per_device_train_batch_size=40,
+    per_device_eval_batch_size=40,
     evaluation_strategy="steps",
     save_steps=50,
     save_total_limit=2,
     logging_steps=50,
     seed=42,
-    # fp16=True,
+    fp16=True,
     dataloader_num_workers=2,
     disable_tqdm=False
 )

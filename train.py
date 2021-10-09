@@ -251,7 +251,8 @@ def main():
             'aug_family' : cfg['aug_family'],\
             'type_ent_marker' : cfg['type_ent_marker'],\
             'type_punct' : cfg['type_punct'],\
-            'tok_len' : cfg['tok_len']
+            'tok_len' : cfg['tok_len'],
+            'xlm' : cfg['xlm']
             }           
 
     #early stop

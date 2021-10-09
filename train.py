@@ -11,7 +11,7 @@ from torchsampler import ImbalancedDatasetSampler
 import torch.nn.functional as F
 from torch.autograd import Variable
 
-wandb.login()
+# wandb.login()
 
 from config_parser import config as cfg
 
@@ -156,25 +156,27 @@ def train(args):
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
     
 
-    # load dataset + prerprocessing dataset
-    train_dataset, dev_dataset = load_stratified_data("../dataset/train/train.csv") 
+    # load dataset + prerprsssocessing dataset
+    if args['adea'] == 'default':
+        train_dataset, dev_dataset = load_stratified_data("../dataset/train/train.csv", aug_family = args['aug_family'], \
+                                                     type_ent_marker = args['type_ent_marker'],\
+                                                     type_punct = args['type_punct'], aug_AEDA = True)
+    else:
+        train_dataset, dev_dataset = load_stratified_data("../dataset/train/train.csv",aug_family = args['aug_family'], \
+                                                     type_ent_marker = args['type_ent_marker'],\
+                                                     type_punct = args['type_punct'])
 
-    train_label = label_to_num(train_dataset['label'].values)
+    # customAeda
+    if args['aeda'] == 'custom':
+        train_label_string, tokenized_train = customAeda(train_dataset, tokenizer)
+        train_label = label_to_num(train_label_string)
+    else:
+        train_label = label_to_num(train_dataset['label'].values)
+        tokenized_train, len_tokenizer = tokenized_dataset(train_dataset, tokenizer, args['tok_len'], cfg['dataPP'])
+
     dev_label = label_to_num(dev_dataset['label'].values)
-
-    # tokenizing dataset    
-    tokenized_train, len_tokenizer = tokenized_dataset(train_dataset, tokenizer, args['tok_len'], cfg['dataPP'])
     tokenized_dev, _ = tokenized_dataset(dev_dataset, tokenizer, args['tok_len'], cfg['dataPP'])
-       # customAeda
-    '''
-    실행시 아래 두 코드 주석처리 필요
-    train_label = label_to_num(train_dataset['label'].values)
-    tokenized_train = tokenized_dataset(train_dataset, tokenizer)
-    '''
-    # train_label_string, tokenized_train = customAeda(train_dataset, tokenizer)
-    # train_label = label_to_num(train_label_string)
-
-
+    
     # make dataset for pytorch.
     RE_train_dataset = RE_Dataset(tokenized_train, train_label)
     RE_dev_dataset = RE_Dataset(tokenized_dev, dev_label)
@@ -247,7 +249,8 @@ def main():
             'aug_family' : cfg['aug_family'],\
             'type_ent_marker' : cfg['type_ent_marker'],\
             'type_punct' : cfg['type_punct'],\
-            'tok_len' : cfg['tok_len'],
+            'tok_len' : cfg['tok_len'],\
+            'aeda' : cfg['aeda'],\
             'xlm' : cfg['xlm']
             }           
 

@@ -19,6 +19,7 @@
     "type_ent_marker": false,
     "type_punct":false,
     "tok_len" : 256,
+    "aeda" : "None",
     "xlm" : false,
 
     "train":{
@@ -54,8 +55,8 @@
         "save_steps":100,                 
         "num_train_epochs":3,              
         "learning_rate":5e-5,               
-        "per_device_train_batch_size":38,  
-        "per_device_eval_batch_size":38,   
+        "per_device_train_batch_size":32,  
+        "per_device_eval_batch_size":32,   
         "warmup_steps":500,                
         "weight_decay":0.01,               
         "logging_dir":"./logs",            

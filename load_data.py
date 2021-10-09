@@ -3,6 +3,8 @@ import os
 import pandas as pd
 import torch
 from sklearn.model_selection import StratifiedShuffleSplit
+from collections import Counter
+import random
 
 os.chdir('./KorEDA/')
 from KorEDA.eda import *
@@ -46,6 +48,104 @@ def load_data(dataset_dir):
   dataset = preprocessing_dataset(pd_dataset)
   
   return dataset
+
+def insert_punctuation_marks(words):
+  PUNCTUATIONS = ['.', ',', '!', '?', ';', ':']
+  PUNC_RATIO = 0.3
+
+  # words = sentence.split(' ')
+  new_line = []
+
+  q = random.randint(1, int(PUNC_RATIO * len(words) + 1))
+  qs = random.sample(range(0, len(words)), q)
+
+  for j, word in enumerate(words):
+    if j in qs:
+      new_line.append(PUNCTUATIONS[random.randint(0, len(PUNCTUATIONS) -1)])
+      new_line.append(word)
+    else:
+      new_line.append(word)
+  new_line = ' '.join(new_line)
+  return new_line
+  
+def customAeda(dataset, tokenizer):
+  # aeda
+  NUM_AUGS = [1, 2, 4, 8] # augmantation 횟수
+  labels = []
+  concat_entity = []
+  sentences = []
+  no_relation_count = Counter(list(dataset['label']))['no_relation'] # no_relation 데이터 수
+  except_labels = set('no_relation')
+
+  for aug in NUM_AUGS:
+    for subj, obj, sentence, label in zip(dataset['subject_entity'], dataset['object_entity'], dataset['sentence'], dataset['label']):
+      # 기존 문장 추가
+      temp = ''
+      temp = subj + '[SEP]' + obj
+      if aug == 1:
+        concat_entity.append(temp)
+        sentences.append(sentence)
+        labels.append(label)
+
+      # aeda # no_relation 제외 
+      '''
+      no_relation의 데이터 수가 가장 많아 no_relation을 기준으로 다른 label의 데이터 수를 비교하여
+      augmentation을 진행함
+      '''
+      if label != 'no_relation':
+        max_count = no_relation_count # augmantation 기준
+        for i in range(aug):
+          if label in list(except_labels): # 데이터가 except_labels에 포함되어있는 label에 해당하는 경우 종료
+            break
+          
+          # 문장을 ' ' 기준으로 미리 나눈 후 entity에 해당하는 단어가 온전한지 확인
+          # entity 에 ' '가 포함되어 있는 경우에는 split()에 의해 분리되기 때문에
+          # 아래 과정을 통해 다시 합침
+          words = sentence.split(' ')
+          word_idx = 0
+          while word_idx < len(words)-1:
+            if ' ' not in subj and ' ' not in obj:
+              break
+            if (words[word_idx] in subj and words[word_idx+1] in subj):
+              words[word_idx] = ' '.join(words[word_idx:word_idx+2])
+              words.pop(word_idx+1)
+            elif (words[word_idx] in subj and subj not in words[word_idx:word_idx+2] and subj in ' '.join(words[word_idx:word_idx+2])):
+              words[word_idx] = ' '.join(words[word_idx:word_idx+2])
+              words.pop(word_idx+1)
+            if (words[word_idx] in obj and words[word_idx+1] in obj):
+              words[word_idx] = ' '.join(words[word_idx:word_idx+2])
+              words.pop(word_idx+1)
+            elif (words[word_idx] in obj and obj not in words[word_idx:word_idx+2] and obj in ' '.join(words[word_idx:word_idx+2])):
+              words[word_idx] = ' '.join(words[word_idx:word_idx+2])
+              words.pop(word_idx+1)
+            else:
+              word_idx += 1
+
+
+          concat_entity.append(temp)
+          labels.append(label)
+          sentence_aug = insert_punctuation_marks(words) # sentence에 puhctuation marks를 넣음
+          sentences.append(sentence_aug) 
+        label_counts = Counter(labels).most_common()
+        max_count *= 0.4 # augmantation 기준
+
+        for count in label_counts:
+          if count[1] > max_count: # max_count 보다 많은 데이터를 가진 label에 해당하면 augmantation 하지 않음
+            except_labels.add(count[0])
+
+          
+  tokenized_sentences = tokenizer(
+    concat_entity,
+    sentences,
+    return_tensors="pt",
+    padding=True,
+    truncation=True,
+    max_length=512,
+    add_special_tokens=True,
+    return_token_type_ids=False,
+  )
+
+  return labels, tokenized_sentences
 
 def tokenized_dataset(dataset, tokenizer, tok_len):
   """ tokenizer에 따라 sentence를 tokenizing 합니다."""

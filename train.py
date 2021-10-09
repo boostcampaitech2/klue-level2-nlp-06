@@ -149,6 +149,15 @@ def train(args):
     tokenized_train = tokenized_dataset(train_dataset, tokenizer, args['tok_len'])
     tokenized_dev = tokenized_dataset(dev_dataset, tokenizer,args['tok_len'])
 
+    # customAeda
+    '''
+    실행시 아래 두 코드 주석처리 필요
+    train_label = label_to_num(train_dataset['label'].values)
+    tokenized_train = tokenized_dataset(train_dataset, tokenizer)
+    '''
+    # train_label_string, tokenized_train = customAeda(train_dataset, tokenizer)
+    # train_label = label_to_num(train_label_string)
+
     # make dataset for pytorch.
     RE_train_dataset = RE_Dataset(tokenized_train, train_label)
     RE_dev_dataset = RE_Dataset(tokenized_dev, dev_label)

@@ -248,58 +248,6 @@ def main():
 
 
 if __name__ == '__main__':
-
-
     
-    exp_name = cfg['wandb']['name']
-    cfg['aug'] = False
     main()
-    # try:
-    #     cfg['tok_len'] = 256
-    #     cfg['wandb']['name'] = exp_name + "tok_len_"+ str(256) + "mlm_256"
-    #     cfg['model']['huggingface'] = "/opt/ml/transformers/examples/pytorch/language-modeling/mlm_roberta_large_tok_256_900"
-    #     main()
-    #     os.system("rm -rf ./results/roberta_large_stratified*") 
-    # except:
-    #     print("error" + cfg['wandb']['name'] )
-
-    # cfg['aug'] = True
-    # try:
-    #     cfg['tok_len'] = 256
-    #     cfg['wandb']['name'] = exp_name + "_aug_" + "tok_len_"+ str(256) + "mlm_256"
-    #     cfg['model']['huggingface'] = "/opt/ml/transformers/examples/pytorch/language-modeling/mlm_roberta_large_tok_256_900"
-    #     main()
-    #     os.system("rm -rf ./results/roberta_large_stratified*") 
-    # except:
-    #     print("error" + cfg['wandb']['name'] )
-
-    # try:
-    #     cfg['tok_len'] = 400
-    #     cfg['wandb']['name'] = exp_name + "_aug_" + "tok_len_"+ str(400)
-    #     cfg['model']['huggingface'] = "klue/roberta-large"
-    #     main()
-    #     os.system("rm -rf ./results/roberta_large_stratified*") 
-    # except:
-    #     print("error" + cfg['wandb']['name'] )
-    
-    # try:
-
-    #     cfg['tok_len'] = 256
-    #     cfg['wandb']['name'] = exp_name + "_aug_" + "tok_len_"+ str(256)
-    #     cfg['model']['huggingface'] = "klue/roberta-large"
-    #     main()
-    #     os.system("rm -rf ./results/roberta_large_stratified*") 
-    # except:
-    #     print("error" + cfg['wandb']['name'] )
-    
-    # try:
-
-    #     cfg['tok_len'] = 400
-    #     cfg['wandb']['name'] = exp_name + "_aug_" + "tok_len_"+ str(400) + "mlm_512"
-    #     cfg['model']['huggingface'] = "/opt/ml/transformers/examples/pytorch/language-modeling/mlm_roberta_large-1100"
-    #     main()
-    #     os.system("rm -rf ./results/roberta_large_stratified*") 
-    # except:
-    #     print("error" + cfg['wandb']['name'] )
-
 

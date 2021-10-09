@@ -115,14 +115,16 @@ def load_stratified_data_AEDA(dataset_dir):
                 sentA, sentB = map(str, A.split(ob))
                 sentA = aeda(sentA)
                 sentB = aeda(sentB)
-                B = aeda(B)
+                if len(B) > 1:
+                  B = aeda(B)
                 sentence = sentA + se + sentB + ob + B 
         
             elif ob in B:
                 sentA, sentB = map(str, B.split(ob))
                 sentA = aeda(sentA)
                 sentB = aeda(sentB)
-                A = aeda(A)
+                if len(A) > 1:
+                  A = aeda(A)
                 sentence = A + se + sentA + ob + sentB
 
             if sentence != sent :

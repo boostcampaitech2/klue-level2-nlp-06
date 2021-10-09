@@ -99,7 +99,7 @@ def load_stratified_data_AEDA(dataset_dir):
                                         (pd_dataset['label'] == "per:date_of_death")
     ]
 
-    aeda = myAEDA(
+    aeda = AEDA(
         morpheme_analyzer="Mecab", punc_ratio=0.3, punctuations=[".", ",", "!", "?", ";", ":"]
     )
     df_train_sen = copy.deepcopy(pd_dataset)
@@ -135,47 +135,47 @@ def load_stratified_data_AEDA(dataset_dir):
     return df_train_sen, df_valid
 
 
-SPACE_TOKEN = "\u241F"
+# SPACE_TOKEN = "\u241F"
 
 
-def replace_space(text: str) -> str:
-  return text.replace(" ", SPACE_TOKEN)
+# def replace_space(text: str) -> str:
+#   return text.replace(" ", SPACE_TOKEN)
 
 
-def revert_space(text: list) -> str:
-  clean = " ".join("".join(text).replace(SPACE_TOKEN, " ").split()).strip()
-  return clean
+# def revert_space(text: list) -> str:
+#   clean = " ".join("".join(text).replace(SPACE_TOKEN, " ").split()).strip()
+#   return clean
 
 
-# 이거 불러와서 AEDA 처럼 쓰시면 됩니다.
-class myAEDA(AEDA):
-  def _aeda(self, data: str, p: float) -> str:
-      if p is None:
-          p = self.ratio
+# # 이거 불러와서 AEDA 처럼 쓰시면 됩니다.
+# class myAEDA(AEDA):
+#   def _aeda(self, data: str, p: float) -> str:
+#       if p is None:
+#           p = self.ratio
 
-      split_words = self.morpheme_analyzer.morphs(replace_space(data))
-      words = self.morpheme_analyzer.morphs(data)
+#       split_words = self.morpheme_analyzer.morphs(replace_space(data))
+#       words = self.morpheme_analyzer.morphs(data)
 
-      new_words = []
-      qs_list = [
-          index
-          for index in range(len(split_words))
-          if split_words[index] != SPACE_TOKEN
-      ]
-      q = random.randint(1, int(p * len(qs_list) + 1))
-      qs = random.sample(qs_list, q)
+#       new_words = []
+#       qs_list = [
+#           index
+#           for index in range(len(split_words))
+#           if split_words[index] != SPACE_TOKEN
+#       ]
+#       q = random.randint(1, int(p * len(qs_list) + 1))
+#       qs = random.sample(qs_list, q)
 
-      for j, word in enumerate(split_words):
-          if j in qs:
-              new_words.append(SPACE_TOKEN)
-              new_words.append(
-                  self.punctuations[random.randint(0, len(self.punctuations) - 1)]
-              )
-              new_words.append(SPACE_TOKEN)
-              new_words.append(word)
-          else:
-              new_words.append(word)
+#       for j, word in enumerate(split_words):
+#           if j in qs:
+#               new_words.append(SPACE_TOKEN)
+#               new_words.append(
+#                   self.punctuations[random.randint(0, len(self.punctuations) - 1)]
+#               )
+#               new_words.append(SPACE_TOKEN)
+#               new_words.append(word)
+#           else:
+#               new_words.append(word)
 
-      augmented_sentences = revert_space(new_words)
+#       augmented_sentences = revert_space(new_words)
 
-      return augmented_sentences
+#       return augmented_sentences

@@ -4,3 +4,4 @@ transformers==4.10.0
 koeda
 wandb
 torch
+https://github.com/ufoym/imbalanced-dataset-sampler/archive/master.zip

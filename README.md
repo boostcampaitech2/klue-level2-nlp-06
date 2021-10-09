@@ -35,18 +35,17 @@ RE is a task to identify semantic relations between entity pairs in a text. The 
 #### 평가지표 
 - 'No relation' 라벨을 제외한 Micro F1-score로 평가하였다. 
   
-  
+
 ## Table of Contents
 1. [Prerequisites Installatioin](#prerequisites-installatioin)
 2. [Quick Start](#quick-start)
 3. [Advanced Examples](#advanced-examples)
-4. [Model Architecture](#code-structure)
-
-5. [Augmenters](#augmenters)
-
-6. [Contributor](#contributor)
-
-
+4. [Code Structure](#code-structure)
+5. [Usage](#usage)
+6. [Augmenters](#augmenters)
+7. [Contributor](#contributor)
+    
+  
 ## Prerequisites Installatioin
 requirements.txt can be installed using pip as follows:
 ```shell script
@@ -61,18 +60,13 @@ python train.py
 - inference
 ```shell script
 python inference.py
-```
+```   
+ 
 ## Advanced Examples
 change the mode by editing the config.json
-- Baseline
-```json
-    "focal_loss":{
-        "true" : false,
-        "alpha" : 0.1,
-        "gamma" : 0.25
-      },
-```
-- Using Focal loss
+## Usage
+### Using Focal loss
+
 ```json
     "focal_loss":{
         "true" : True,
@@ -80,15 +74,112 @@ change the mode by editing the config.json
         "gamma" : 0.25
       },
 ```
+### Using Imbalanced Sampler
+```json
+"Trainer" : {
+      "use_imbalanced_sampler" : true 
+    },
+```
 
+### Using Tokenize like BERT
+**BERT result**
+![](https://i.imgur.com/0vtBNj9.png)
+[CLS] the man went to [MASK] store <span style="color:red">[SEP]</span>he bought a gallon [MASK] milk <span style="color:red">[SEP]</span> LABEL = IsNext
+**like BERT result**
+[CLS][obj] 변정수[/obj] 씨는 1994년 21살의 나이에 7살 연상 남편과 결혼해 슬하에 두 딸 [subj]유채원[/subj], 유정원 씨를 두고 있다. <span style="color:red">[SEP]</span>[obj][PER]변정수[/obj][subj][PER]유채원[/subj] <span style="color:red">[SEP]</span>
+```json
+"dataPP" :{ 
+    "active" : true,
+    "entityInfo" : "entity&token",
+    "sentence" : "entity"
+},
+```
+    
+### AEDA 
+
+```json
+"aeda" : "None"
+```
+**Default**
+하위 15개 label에 대해 AEDA 적용 (Mecab 설치필요)
+```json
+"aeda" : "default"
+```
+#### Mecab 설치방법
+    sudo apt install g++
+    sudo apt update
+    sudo apt install default-jre
+    sudo apt install default-jdk
+    pip install konlpy
+
+    # install khaiii
+    cd ~
+    git clone https://github.com/kakao/khaiii.git
+    cd khaiii
+    mkdir build
+    cd build
+    pip install cmake
+    sudo apt-get install cmake
+    cmake ..
+    make resource
+    sudo make install
+    make package_python
+    cd package_python
+    pip install .
+    cd ~
+    apt-get install locales
+    locale-gen en_US.UTF-8
+    pip install tweepy==3.7.0
+    # install mecab
+    wget https://bitbucket.org/eunjeon/mecab-ko/downloads/mecab-0.996-ko-0.9.2.tar.gz
+    tar xvfz mecab-0.996-ko-0.9.2.tar.gz
+    cd mecab-0.996-ko-0.9.2
+    ./configure
+    make
+    make check
+    sudo make install
+    sudo ldconfig
+    cd ~
+    wget https://bitbucket.org/eunjeon/mecab-ko-dic/downloads/mecab-ko-dic-2.1.1-20180720.tar.gz
+    tar xvfz mecab-ko-dic-2.1.1-20180720.tar.gz
+    cd mecab-ko-dic-2.1.1-20180720
+    ./configure
+    make
+    sudo make install
+    cd ~
+    mecab -d /usr/local/lib/mecab/dic/mecab-ko-dic
+    apt install curl
+    apt install git
+    bash <(curl -s https://raw.githubusercontent.com/konlpy/konlpy/master/scripts/mecab.sh)
+    pip install mecab-python
+
+**Custom** 
+Mecab 설치 불필요
+
+`# of no_relation * 0.4` 보다 적은 데이터를 가지는 label에 대해서 augmantation 실행 
+sentence를 space(' ')기준으로 나눈 후 entity에 해당하는 데이터를 합친 후 aeda 적용
+
+```json
+"aeda" : "custom"
+    
 
 ## Config Augmenters
 ### Wandb
+- RoRERTa-large
+
 | Argument        | DataType    | Default                                  | Help                          |
 |-----------------|:-----------:|:----------------------------------------:|:-----------------------------:|
 | name            | str         | "roberta_large_stratified"                | Wandb model Name              |
 | tags            | list        | ["ROBERT_LARGE", "stratified", "10epoch"]| Wandb Tags     |
 | group           | str         | "ROBERT_LARGE"                            | Wandb group Name     |
+
+- XLM-RoBERTa-large
+
+| Argument        | DataType    | Default                                  | Help                          |
+|-----------------|:-----------:|:----------------------------------------:|:-----------------------------:|
+| name            | str         | "XLM-RoBERTa-large"                | Wandb model Name              |
+| tags            | list        | ["XLM-RoBERTa-large", "stratified", "10epoch"]| Wandb Tags     |
+| group           | str         | "XLM-RoBERTa-large"                            | Wandb group Name     |
 
 ### Focal Loss
 | Argument        | DataType    | Default                                  | Help                          |
@@ -97,7 +188,10 @@ change the mode by editing the config.json
 | alpha           | float       | 0.1                                       | balances focal loss     |
 | gamma           | float       | 0.25                                      | smoothly adjusts the rate  |
 
-### Train Augments
+### Train Arguments
+
+- RoBERTa-large
+
 | Argument        | DataType    | Default          | Help                          |
 |-----------------|:-----------:|:----------------:|:-----------------------------:|
 | output_dir      | str         | "./results"      | result director                |
@@ -115,6 +209,24 @@ change the mode by editing the config.json
 | eval_steps    | int     | 100               | eval steps |
 | load_best_model_at_end   | bool         | true     |  best checkpoint saving (loss) |
 
+- XLM-RoBERTa-large
+
+| Argument        | DataType    | Default          | Help                          |
+|-----------------|:-----------:|:----------------:|:-----------------------------:|
+| output_dir      | str         | "./results"      | result director                |
+| save_total_limit| int         | 10               | limit of save files     |
+| save_steps      | int         | 100              | saving step    |
+| num_train_epochs| int         | 10                | train epochs |
+| learning_rate   | int         | 5e-5             | learning rate |
+| per_device_train_batch_size| int         | 31               | train batch size |
+| per_device_eval_batch_size | int         | 31  | evaluation batch size        |
+| warmup_steps    | int         | 500              | lr scheduler warm up step      |
+| weight_decay    | float         | 0.01         | AdamW weight decay  |
+| logging_dir      | str       | "./logs"             | logging dir   |
+| logging_steps       | int         | 100            | logging step            |
+| evaluation_strategy   | str         | "steps"               | evaluation strategy (epoch or step) |
+| eval_steps    | int     | 100               | eval steps |
+| load_best_model_at_end   | bool         | true     |  best checkpoint saving (loss) |
 
 
 ## Reference

@@ -260,7 +260,7 @@ def main():
         args['patience'] =  cfg['train']['early_stop']['patience']
 
     if args['xlm']:
-        wandb.init(project='klue-RE', name=cfg['wandb']['xlm']['name'],tags=cfg['wandb']['xlm']['tags'], group=cfg['wandb']['xlm']['group'], entity='boostcamp-nlp-06')
+        wandb.init(project='klue-RE', name=cfg['wandb']['xlm']['name'],tags=cfg['wandb']['xlm']['tags'], group=cfg['wandb']['xlm']['group'])
     else:
         wandb.init(project='klue-RE', name=cfg['wandb']['name'],tags=cfg['wandb']['tags'], group=cfg['wandb']['group'])
     

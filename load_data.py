@@ -25,7 +25,7 @@ def add_special_token(tokenizer, special_token):
     "none" : [],
     "entity" : ['<obj>', '</obj>', '<subj>', '</subj>'],
     "type" : ['<PER>', '<ORG>', '<LOC>', '<DAT>', '<POH>', '<NOH>'],
-    "entity&type" : ['<obj>', '</obj>', '<subj>', '</subj>', '</PER>', '</ORG>', '</LOC>', '</DAT>', '</POH>', '</NOH>'],
+    "entity&token" : ['<obj>', '</obj>', '<subj>', '</subj>', '</PER>', '</ORG>', '</LOC>', '</DAT>', '</POH>', '</NOH>'],
     "all" : ['<obj>', '</obj>', '<subj>', '</subj>', '</PER>', '</ORG>', '</LOC>', '</DAT>', '</POH>', '</NOH>', '<wikipedia>', '<wikitree>', '<policy_briefing>'], 
   }  
   entity_special_tokens = {'additional_special_tokens': token_dict[special_token]}    
@@ -76,15 +76,46 @@ def add_special_tokens_to_sentence(sentence, object_entity, subject_entity, sour
     else :
       new_sentence= sentence   
     return new_sentence
-def read_klue_re(dataset, special_token):
+def make_info_entity(object_entity, subject_entity, source, type):
+    obj_start_idx, obj_end_idx = object_entity['start_idx'], object_entity['end_idx']
+    subj_start_idx, subj_end_idx = subject_entity['start_idx'], subject_entity['end_idx']  
+    obj_type = type_tag_dict[object_entity['type']]
+    subj_type = type_tag_dict[subject_entity['type']]    
+    source_tag = '<'+source+'>'
+    entity = ''
+    '''     
+    entity,type, entity&type, all
+    '''
+    obj_token = '<obj>'+object_entity['word'] +'</obj>'
+    subj_token = '<subj>'+subject_entity['word'] +'</subj>'
+    if type =='entity&type':
+      if obj_start_idx < subj_start_idx:
+        entity=obj_token+obj_type+subj_token+subj_type
+      else :
+        entity=subj_token+subj_type+obj_token+obj_type
+    elif type=='entity':
+      if obj_start_idx < subj_start_idx:
+        entity=obj_token+subj_token
+      else :
+        entity=subj_token+obj_token
+    elif type=='all' :
+      if obj_start_idx < subj_start_idx:
+        entity=source_tag+obj_token+subj_token
+      else :
+        entity=source_tag+subj_token+obj_token
+    return entity
+def read_klue_re(dataset, type):
     sentences = []
+    entites = []
     labels = [] 
     for temp in dataset.iterrows():
         data=temp[1]
-        sentence = add_special_tokens_to_sentence(data['sentence'], data['object_entity_dict'], data['subject_entity_dict'], data['source'], special_token)
+        sentence = add_special_tokens_to_sentence(data['sentence'], data['object_entity_dict'], data['subject_entity_dict'], data['source'], type['sentence'])
+        entity = make_info_entity(data['object_entity_dict'], data['subject_entity_dict'], data['source'], type['entityInfo'])        
         sentences.append(sentence)
+        entites.append(entity)
         labels.append(data['label'])
-    return sentences
+    return sentences, entites
 class RE_Dataset(torch.utils.data.Dataset):
   """ Dataset 구성을 위한 class."""
   def __init__(self, pair_dataset, labels):
@@ -133,10 +164,23 @@ def load_data(dataset_dir):
   
   return dataset
 
-def tokenized_dataset(dataset, tokenizer, type='none'):
+def tokenized_dataset(dataset, tokenizer, type):
   """ tokenizer에 따라 sentence를 tokenizing 합니다."""
   concat_entity = []
-  if type == 'none' : 
+  if type['active'] : 
+    sentences, entities = read_klue_re(dataset, type)
+    tokenizer = add_special_token(tokenizer, type['entityInfo'])
+    tokenized_sentences =tokenizer(
+                        sentences,
+                        entities,
+                        return_tensors="pt",
+                        padding=True,
+                        truncation=True,
+                        max_length=514,
+                        add_special_tokens=True,
+                        return_token_type_ids=False,
+                        )  
+  else : 
     for e01, e02 in zip(dataset['subject_entity'], dataset['object_entity']):
       temp = ''
       temp = e01 + '[SEP]' + e02
@@ -150,19 +194,7 @@ def tokenized_dataset(dataset, tokenizer, type='none'):
         max_length=514,
         add_special_tokens=True,
         return_token_type_ids=False,
-        )    
-  else : 
-    sentences = read_klue_re(dataset, type)
-    tokenizer = add_special_token(tokenizer, type)
-    tokenized_sentences =tokenizer(
-                        sentences,
-                        return_tensors="pt",
-                        padding=True,
-                        truncation=True,
-                        max_length=514,
-                        add_special_tokens=True,
-                        return_token_type_ids=False,
-                        )  
+        )   
   return tokenized_sentences, len(tokenizer)
   
 

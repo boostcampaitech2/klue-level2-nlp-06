@@ -5,8 +5,10 @@
     "tags" : ["ROBERT_LARGE", "stratified", "3epoch", "ImbalancedSampler" ], 
     "group" : "ROBERT_LARGE"
   },
-  "dataPP" :{
-    "specialToken" : "none"
+  "dataPP" :{ 
+    "active" : true,
+    "entityInfo" : "entity&token",
+    "sentence" : "entity"
   },
   "train":{
     "Trainer" : {
@@ -17,7 +19,7 @@
       "save_total_limit":10,              
       "save_steps":100,                 
       "num_train_epochs":3,              
-      "learning_rate":5e-5,               
+      "learning_rate":5e-5, 
       "per_device_train_batch_size":38,  
       "per_device_eval_batch_size":38,   
       "warmup_steps":500,                

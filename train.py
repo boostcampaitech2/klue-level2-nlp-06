@@ -15,45 +15,7 @@ wandb.login()
 
 from config_parser import config as cfg
 
-class FocalLoss(torch.nn.Module):
-    def __init__(self, gamma=0, alpha=None, size_average=True):
-        super(FocalLoss, self).__init__()
-        self.gamma = gamma
-        self.alpha = alpha
-        if isinstance(alpha, (float, int)): self.alpha = torch.Tensor([alpha, 1 - alpha])
-        if isinstance(alpha, list): self.alpha = torch.Tensor(alpha)
-        self.size_average = size_average
-
-    def forward(self, input, target):
-        if input.dim()>2:
-            input = input.view(input.size(0), input.size(1), -1)  # N,C,H,W => N,C,H*W
-            input = input.transpose(1, 2)                         # N,C,H*W => N,H*W,C
-            input = input.contiguous().view(-1, input.size(2))    # N,H*W,C => N*H*W,C
-        target = target.view(-1, 1)
-
-        logpt = F.log_softmax(input, dim=1)
-        logpt = logpt.gather(1,target)
-        logpt = logpt.view(-1)
-        pt = logpt.exp()
-
-        if self.alpha is not None:
-            if self.alpha.type() != input.data.type():
-                self.alpha = self.alpha.type_as(input.data)
-            at = self.alpha.gather(0, target.data.view(-1))
-            logpt = logpt * at
-
-        loss = -1 * (1 - pt)**self.gamma * logpt
-        if self.size_average: return loss.mean()
-        else: return loss.sum()
-
-class ImbalancedSamplerTrainer(Trainer):
-    def compute_loss(self, model, inputs, return_outputs=False):
-        labels = inputs.pop("labels")
-        outputs= model(**inputs)
-        logits = outputs.logits
-        criterion = FocalLoss()
-        loss = criterion(logits.view(-1, self.model.config.num_labels), labels.view(-1))
-        return (loss, outputs) if return_outputs else loss
+class ImbalancedSamplerTrainer(Trainer):    
     def get_train_dataloader(self) -> DataLoader:
         train_dataset = self.train_dataset
 
@@ -117,7 +79,6 @@ def klue_re_micro_f1(preds, labels):
     label_indices.remove(no_relation_label_idx)
     return sklearn.metrics.f1_score(labels, preds, average="micro", labels=label_indices) * 100.0
 
-
 def klue_re_auprc(probs, labels):
     """KLUE-RE AUPRC (with no_relation)"""
     labels = np.eye(30)[labels]
@@ -129,7 +90,6 @@ def klue_re_auprc(probs, labels):
         precision, recall, _ = sklearn.metrics.precision_recall_curve(targets_c, preds_c)
         score[c] = sklearn.metrics.auc(recall, precision)
     return np.average(score) * 100.0
-
 
 def compute_metrics(pred):
     """ validation을 위한 metrics function """
@@ -182,9 +142,9 @@ def train(args):
     train_label = label_to_num(train_dataset['label'].values)
     dev_label = label_to_num(dev_dataset['label'].values)
 
-    # tokenizing dataset
-    tokenized_train, len_tokenizer = tokenized_dataset(train_dataset, tokenizer, cfg['dataPP']['specialToken'])
-    tokenized_dev, _ = tokenized_dataset(dev_dataset, tokenizer,  cfg['dataPP']['specialToken'])
+    # tokenizing dataset    
+    tokenized_train, len_tokenizer = tokenized_dataset(train_dataset, tokenizer, cfg['dataPP'])
+    tokenized_dev, _ = tokenized_dataset(dev_dataset, tokenizer,  cfg['dataPP'])
 
     # make dataset for pytorch.
     RE_train_dataset = RE_Dataset(tokenized_train, train_label)
@@ -216,7 +176,7 @@ def train(args):
     if args['early_stop']:
         callbacks_list.append( EarlyStoppingCallback(early_stopping_patience = args['patience']) )
     if cfg['train']['Trainer']['use_imbalanced_sampler'] :   
-        trainer = ImbalancedSamplerTrainer(
+        trainer = Trainer(
             model=model,                         # the instantiated 🤗 Transformers model to be trained
             args=training_args,                  # training arguments, defined above
             train_dataset=RE_train_dataset,         # training dataset
@@ -235,9 +195,9 @@ def train(args):
     )
 
     # train model
-    trainer.train()
-    model.save_pretrained('./best_model/' + args['exp_name'])
-    wandb.finish()
+    #trainer.train()
+    #model.save_pretrained('./best_model/' + args['exp_name'])
+    #wandb.finish()
 
 
 def main():
@@ -259,7 +219,7 @@ def main():
     if cfg['train']['early_stop']['true']:
         args['patience'] =  cfg['train']['early_stop']['patience']
 
-    wandb.init(project='klue-RE', name=cfg['wandb']['name'],tags=cfg['wandb']['tags'], group=cfg['wandb']['group'], entity='boostcamp-nlp-06')
+    #wandb.init(project='klue-RE', name=cfg['wandb']['name'],tags=cfg['wandb']['tags'], group=cfg['wandb']['group'], entity='boostcamp-nlp-06')
     
     train(args)
 

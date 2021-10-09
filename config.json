@@ -10,7 +10,11 @@
       "group" : "xlm-roberta-large"
       }
     },
-
+    "dataPP" :{ 
+      "active" : false,
+      "entityInfo" : "entity&token",
+      "sentence" : "entity"
+    },
     "aug_family": false,
     "type_ent_marker": false,
     "type_punct":false,
@@ -18,6 +22,9 @@
     "xlm" : false,
 
     "train":{
+      "Trainer" :{
+        "use_imbalanced_sampler" : false
+      },
       "focal_loss":{
         "true" : false,
         "alpha" : 0.1,

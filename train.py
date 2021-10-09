@@ -145,7 +145,12 @@ def train(args):
     tokenized_train = tokenized_dataset(train_dataset, tokenizer)
     tokenized_dev = tokenized_dataset(dev_dataset, tokenizer)
 
-    # aeda
+    # customAeda
+    '''
+    실행시 아래 두 코드 주석처리 필요
+    train_label = label_to_num(train_dataset['label'].values)
+    tokenized_train = tokenized_dataset(train_dataset, tokenizer)
+    '''
     # train_label_string, tokenized_train = customAeda(train_dataset, tokenizer)
     # train_label = label_to_num(train_label_string)
 

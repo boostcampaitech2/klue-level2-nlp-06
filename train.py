@@ -137,7 +137,10 @@ def train(args):
     
 
     # load dataset
-    train_dataset, dev_dataset = load_stratified_data("../dataset/train/train.csv", aug = args['aug'])
+    train_dataset, dev_dataset = load_stratified_data("../dataset/train/train.csv", \
+                                                     aug_family = args['aug_family'], \
+                                                     type_ent_marker = args['type_ent_marker'],\
+                                                     type_punct = args['type_punct'])
 
     train_label = label_to_num(train_dataset['label'].values)
     dev_label = label_to_num(dev_dataset['label'].values)
@@ -192,7 +195,6 @@ def train(args):
 
     # train model
     trainer.train()
-    trainer.evaluate()
     model.save_pretrained('./best_model/' + args['exp_name'])
     wandb.finish()
 

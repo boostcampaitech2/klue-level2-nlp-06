@@ -1,8 +1,8 @@
   {
     "wandb":{
-      "name" : "roberta_large_stratified_no_train",
+      "name" : "roberta_large_stratified",
       "tags" : ["ROBERT_LARGE", "stratified", "10epoch"], 
-      "group" : "MLM"
+      "group" : "ROBERT_LARGE"
     },
 
     "aug_family": false,
@@ -19,9 +19,9 @@
 
       "TrainingArguments" : {
         "output_dir":"./results",          
-        "save_total_limit":1,              
+        "save_total_limit":10,              
         "save_steps":100,                 
-        "num_train_epochs":10,              
+        "num_train_epochs":3,              
         "learning_rate":5e-5,               
         "per_device_train_batch_size":38,  
         "per_device_eval_batch_size":38,   
@@ -34,7 +34,7 @@
         "load_best_model_at_end" : true
       },
       "early_stop": {
-        "true" : true,
+        "true" : false,
         "patience" : 5
       }
       

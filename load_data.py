@@ -29,7 +29,6 @@ def preprocessing_dataset(dataset):
   for i,j in zip(dataset['subject_entity'], dataset['object_entity']):
       i = i[1:-1].split(',')[0].split(':')[1]
       j = j[1:-1].split(',')[0].split(':')[1]
-
       subject_entity.append(i)
       object_entity.append(j)
 
@@ -119,6 +118,25 @@ def augmentation(target_set):
         break
   return new_row
 
+def augment_family(dataset):
+    """
+    Function: augmentation
+    Definition: per:children", "per:colleagues", "per:other_family 레이블에 대해서 augmentation. KorEDA의 randomSwap 사용
+    """
+    before = len(dataset)
+    print("processing data augmentation... may take a while...")
+
+    for label in [ "per:children", "per:colleagues", "per:other_family" ]:
+        target_set = dataset[dataset.label == label]
+        new_example = augmentation(target_set)
+        new_df = pd.DataFrame(new_example, columns = target_set.columns)
+        new_df
+        dataset = pd.concat([dataset, new_df])
+
+    after = len(dataset)    
+    print("augmentation finishied. Before aug size: %d, After aug size: %d" %(before, after))
+    return dataset
+
 
 def add_ent_marker(sen, ent, sub_obj_type, ent_s, ent_e, add_len = 0, typed_punct = False):
   """
@@ -207,25 +225,11 @@ def load_stratified_data(dataset_dir, aug_family = False, type_ent_marker = Fals
     strat_dev_set = pd_dataset.loc[test_index]
 
   if aug_family:
-    before = len(strat_train_set)
-    print("processing data augmentation... may take a while...")
-
-    for l in [ "per:children", "per:colleagues", "per:other_family" ]:
-        target_set = strat_train_set[strat_train_set.label == l]
-        new_rows = augmentation(target_set)
-        new_df = pd.DataFrame(new_rows, columns = target_set.columns)
-        new_df
-        strat_train_set = pd.concat([strat_train_set, new_df])
-
-    after = len(strat_train_set)    
-    print("augmentation finishied. Before aug size: %d, After aug size: %d" %(before, after))
+    strat_train_set = augment_family(strat_train_set)
 
   if type_ent_marker:
-      res = entity_marker(strat_train_set, typed_punct = type_punct)
-      strat_train_set['sentence'] = res
-
-      res = entity_marker(strat_dev_set, typed_punct = type_punct)
-      strat_dev_set['sentence'] = res
+    strat_train_set['sentence']  = entity_marker(strat_train_set, typed_punct = type_punct)
+    strat_dev_set['sentence'] = entity_marker(strat_dev_set, typed_punct = type_punct)
 
   train_dataset = preprocessing_dataset(strat_train_set)  
   dev_dataset = preprocessing_dataset(strat_dev_set)  

@@ -11,7 +11,7 @@ from torchsampler import ImbalancedDatasetSampler
 import torch.nn.functional as F
 from torch.autograd import Variable
 
-wandb.login()
+# wandb.login()
 
 from config_parser import config as cfg
 
@@ -46,8 +46,7 @@ class ImbalancedSamplerTrainer(Trainer):
             sampler=train_sampler,
             collate_fn=self.data_collator,
             drop_last=self.args.dataloader_drop_last,
-            num_workers=self.args.dataloader_num_workers,
-            pin_memory=self.args.dataloader_pin_memory,
+            num_workers=self.args.dataloader_num_workers            
         )
 # code from mask competition
 # exp 이름을 디렉토리에서 확인하여 실험 번호를 1씩 추가
@@ -93,7 +92,6 @@ def klue_re_micro_f1(preds, labels):
     label_indices = list(range(len(label_list)))
     label_indices.remove(no_relation_label_idx)
     return sklearn.metrics.f1_score(labels, preds, average="micro", labels=label_indices) * 100.0
-
 
 def klue_re_auprc(probs, labels):
     """KLUE-RE AUPRC (with no_relation)"""
@@ -148,31 +146,37 @@ def train(args):
     seed_everything(2021) # fix seed to current year
 
     # load model and tokenizer
-    # MODEL_NAME = "bert-base-uncased"
+    # MODEL_NAME = "roberta-large"
     MODEL_NAME = cfg['model']['huggingface']
+
+    # xlm-roberta-large model
+    if args['xlm']:
+        MODEL_NAME = cfg['model']['xlm']
 
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
     
 
-    # load dataset + prerprocessing dataset
-    train_dataset, dev_dataset = load_stratified_data("../dataset/train/train.csv") 
+    # load dataset + prerprsssocessing dataset
+    if args['adea'] == 'default':
+        train_dataset, dev_dataset = load_stratified_data("../dataset/train/train.csv", aug_family = args['aug_family'], \
+                                                     type_ent_marker = args['type_ent_marker'],\
+                                                     type_punct = args['type_punct'], aug_AEDA = True)
+    else:
+        train_dataset, dev_dataset = load_stratified_data("../dataset/train/train.csv",aug_family = args['aug_family'], \
+                                                     type_ent_marker = args['type_ent_marker'],\
+                                                     type_punct = args['type_punct'])
 
-    train_label = label_to_num(train_dataset['label'].values)
+    # customAeda
+    if args['aeda'] == 'custom':
+        train_label_string, tokenized_train = customAeda(train_dataset, tokenizer)
+        train_label = label_to_num(train_label_string)
+    else:
+        train_label = label_to_num(train_dataset['label'].values)
+        tokenized_train, len_tokenizer = tokenized_dataset(train_dataset, tokenizer, args['tok_len'], cfg['dataPP'])
+
     dev_label = label_to_num(dev_dataset['label'].values)
-
-    # tokenizing dataset    
-    tokenized_train, len_tokenizer = tokenized_dataset(train_dataset, tokenizer, cfg['dataPP'])
-    tokenized_dev, _ = tokenized_dataset(dev_dataset, tokenizer,  cfg['dataPP'])
-       # customAeda
-    '''
-    실행시 아래 두 코드 주석처리 필요
-    train_label = label_to_num(train_dataset['label'].values)
-    tokenized_train = tokenized_dataset(train_dataset, tokenizer)
-    '''
-    # train_label_string, tokenized_train = customAeda(train_dataset, tokenizer)
-    # train_label = label_to_num(train_label_string)
-
-
+    tokenized_dev, _ = tokenized_dataset(dev_dataset, tokenizer, args['tok_len'], cfg['dataPP'])
+    
     # make dataset for pytorch.
     RE_train_dataset = RE_Dataset(tokenized_train, train_label)
     RE_dev_dataset = RE_Dataset(tokenized_dev, dev_label)
@@ -204,13 +208,14 @@ def train(args):
     callbacks_list = []
     if args['early_stop']:
         callbacks_list.append( EarlyStoppingCallback(early_stopping_patience = args['patience']) )
-    trainer_container=Trainer
+    
     if cfg['train']['Trainer']['use_imbalanced_sampler'] :   
        trainer_container=ImbalancedSamplerTrainer
     elif args['focal_loss']:
         trainer_container = RE_Trainer    
     else : 
-        trainer = trainer_container(
+        trainer_container=Trainer
+    trainer = trainer_container(
         model=model,                         # the instantiated 🤗 Transformers model to be trained
         args=training_args,                  # training arguments, defined above
         train_dataset=RE_train_dataset,         # training dataset
@@ -218,7 +223,6 @@ def train(args):
         compute_metrics=compute_metrics,         # define metrics function
         callbacks = callbacks_list
     )
-
     # train model
     trainer.train()
     model.save_pretrained('./best_model/' + args['exp_name'])
@@ -245,14 +249,23 @@ def main():
             'aug_family' : cfg['aug_family'],\
             'type_ent_marker' : cfg['type_ent_marker'],\
             'type_punct' : cfg['type_punct'],\
-            'tok_len' : cfg['tok_len']
+            'tok_len' : cfg['tok_len'],\
+            'aeda' : cfg['aeda'],\
+            'xlm' : cfg['xlm']
             }           
+
+    # xlm-roberta-large train args
+    if args['xlm']:
+        args['training_args'] = cfg['train']['xlm']['TrainingArguments']
 
     #early stop
     if cfg['train']['early_stop']['true']:
         args['patience'] =  cfg['train']['early_stop']['patience']
 
-    wandb.init(project='klue-RE', name=cfg['wandb']['name'],tags=cfg['wandb']['tags'], group=cfg['wandb']['group'], entity='boostcamp-nlp-06')
+    if args['xlm']:
+        wandb.init(project='klue-RE', name=cfg['wandb']['xlm']['name'],tags=cfg['wandb']['xlm']['tags'], group=cfg['wandb']['xlm']['group'])
+    else:
+        wandb.init(project='klue-RE', name=cfg['wandb']['name'],tags=cfg['wandb']['tags'], group=cfg['wandb']['group'])
     
     train(args)
 

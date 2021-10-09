@@ -146,8 +146,8 @@ def train(args):
     dev_label = label_to_num(dev_dataset['label'].values)
 
     # tokenizing dataset
-    tokenized_train = tokenized_dataset(train_dataset, tokenizer, args['tok_len'])
-    tokenized_dev = tokenized_dataset(dev_dataset, tokenizer,args['tok_len'])
+    tokenized_train = tokenized_dataset(train_dataset, tokenizer, args['tok_len'], cfg['data'])
+    tokenized_dev, _= tokenized_dataset(dev_dataset, tokenizer,args['tok_len'], cfg['dataPP'])
 
     # customAeda
     '''

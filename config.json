@@ -2,13 +2,20 @@
     "wandb":{
       "name" : "roberta_large_stratified",
       "tags" : ["ROBERT_LARGE", "stratified", "10epoch"], 
-      "group" : "ROBERT_LARGE"
+      "group" : "ROBERT_LARGE",
+      
+      "xlm":{
+      "name" : "xlm-roberta-large",
+      "tags" : ["xlm-roberta-large", "stratified", "10epoch"], 
+      "group" : "xlm-roberta-large"
+      }
     },
 
     "aug_family": false,
     "type_ent_marker": false,
     "type_punct":false,
     "tok_len" : 256,
+    "xlm" : false,
 
     "train":{
       "focal_loss":{
@@ -16,6 +23,23 @@
         "alpha" : 0.1,
         "gamma" : 0.25
       },
+
+      "xlm": {"TrainingArguments" : {
+        "output_dir":"./results",          
+        "save_total_limit":10,              
+        "save_steps":100,                 
+        "num_train_epochs":10,              
+        "learning_rate":5e-5,               
+        "per_device_train_batch_size":31,  
+        "per_device_eval_batch_size":31,   
+        "warmup_steps":500,                
+        "weight_decay":0.01,               
+        "logging_dir":"./logs",            
+        "logging_steps":100,              
+        "evaluation_strategy":"steps", 
+        "eval_steps" : 100,            
+        "load_best_model_at_end" : true
+      }},
 
       "TrainingArguments" : {
         "output_dir":"./results",          
@@ -43,6 +67,7 @@
 
     "model" :{
       "huggingface": "klue/roberta-large",
+      "xlm": "xlm-roberta-large",
       "config":{
         "num_labels" : 30
       }

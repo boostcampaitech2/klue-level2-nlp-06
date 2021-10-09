@@ -130,8 +130,12 @@ def train(args):
     seed_everything(2021) # fix seed to current year
 
     # load model and tokenizer
-    # MODEL_NAME = "bert-base-uncased"
+    # MODEL_NAME = "roberta-large"
     MODEL_NAME = cfg['model']['huggingface']
+
+    # xlm-roberta-large model
+    if args['xlm']:
+        MODEL_NAME = cfg['model']['xlm']
 
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
     
@@ -183,6 +187,10 @@ def train(args):
     # https://huggingface.co/transformers/main_classes/trainer.html#trainingarguments 참고해주세요.
     training_args = TrainingArguments(**args['training_arg'])
 
+    # xlm-roberta-large train args
+    if args['xlm']:
+        training_args = cfg['train']['xlm']['TrainingArguments'](**args['training_arg'])
+
     # early stop argument
     callbacks_list = []
     if args['early_stop']:
@@ -233,7 +241,8 @@ def main():
             
 
     wandb.init(project='klue-RE', name=cfg['wandb']['name'],tags=cfg['wandb']['tags'], group=cfg['wandb']['group'], entity='boostcamp-nlp-06')
-    
+    if args['xlm']:
+        wandb.init(project='klue-RE', name=cfg['wandb']['xlm']['name'],tags=cfg['wandb']['xlm']['tags'], group=cfg['wandb']['xlm']['group'], entity='boostcamp-nlp-06')
     train(args)
 
 

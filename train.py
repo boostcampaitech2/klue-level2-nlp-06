@@ -136,7 +136,7 @@ def train(args):
     
 
     # load dataset
-    train_dataset, dev_dataset = load_stratified_data_AEDA("C:/Users/timeo/Desktop/Boostcamp/KLUE/dataset/train/train.csv")
+    train_dataset, dev_dataset = load_stratified_data_AEDA("../train.csv")
     print(train_dataset.head())
     # train_label = label_to_num(train_dataset['label'].values)
     # dev_label = label_to_num(dev_dataset['label'].values)

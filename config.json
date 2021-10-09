@@ -1,16 +1,23 @@
-{
-  "wandb":{
-    "name" : "Domain_4000",
-    "tags" : ["ROBERT_LARGE", "stratified", "3epoch", "domain"], 
-    "group" : "Domain_Adaptation"
-  },
-
+  {
+    "wandb":{
+      "name" : "roberta_large_stratified",
+      "tags" : ["ROBERT_LARGE", "stratified", "10epoch"], 
+      "group" : "ROBERT_LARGE"
+    },
+    "dataPP" :{ 
+      "active" : false,
+      "entityInfo" : "entity&token",
+      "sentence" : "entity"
+    },
     "aug_family": false,
     "type_ent_marker": false,
     "type_punct":false,
     "tok_len" : 256,
 
     "train":{
+      "Trainer" :{
+        "use_imbalanced_sampler" : false
+      },
       "focal_loss":{
         "true" : false,
         "alpha" : 0.1,

@@ -135,7 +135,7 @@ def train(args):
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
     
     # load dataset
-    train_dataset, dev_dataset = load_stratified_data_AEDA("/content/klueee/train.csv")
+    train_dataset, dev_dataset = load_stratified_data("/content/klueee/train.csv")
 
     train_label = label_to_num(train_dataset['label'].values)
     dev_label = label_to_num(dev_dataset['label'].values)

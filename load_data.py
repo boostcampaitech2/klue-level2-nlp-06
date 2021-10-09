@@ -65,22 +65,8 @@ def tokenized_dataset(dataset, tokenizer):
       )
   return tokenized_sentences
 
-def load_stratified_data(dataset_dir):
-  """ csv 파일을 경로에 맡게 불러 옵니다. """  
-  split = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
-  pd_dataset = pd.read_csv(dataset_dir)  
-  
-  for train_index, test_index in split.split(pd_dataset, pd_dataset["label"]):
-    strat_train_set = pd_dataset.loc[train_index]
-    strat_dev_set = pd_dataset.loc[test_index]
-  train_dataset = preprocessing_dataset(strat_train_set)  
-  dev_dataset = preprocessing_dataset(strat_dev_set)  
-  return train_dataset, dev_dataset
-
 # AEDA를 사용하기 위한 data load 함수
-def load_stratified_data_AEDA(dataset_dir):
-    pd_dataset, df_valid = load_stratified_data(dataset_dir)
-
+def AEDA(dataset_dir):
     # 개수가 적은 15개의 label만 따로 빼기
     df_train = pd_dataset[(pd_dataset['label'] == "per:place_of_death") |
                                         (pd_dataset['label'] == "org:number_of_employees/members   ") |
@@ -114,17 +100,17 @@ def load_stratified_data_AEDA(dataset_dir):
             if ob in A:
                 sentA, sentB = map(str, A.split(ob))
                 if len(B) > 1 and len(sentA) > 1 and len(sentB) > 1:
-                  sentA = aeda(sentA)
-                  sentB = aeda(sentB)
-                  B = aeda(B)
+                    sentA = aeda(sentA)
+                    sentB = aeda(sentB)
+                    B = aeda(B)
                 sentence = sentA + se + sentB + ob + B 
         
             elif ob in B:
                 sentA, sentB = map(str, B.split(ob))
                 if len(A) > 1 and len(sentA) > 1 and len(sentB) > 1:
-                  sentA = aeda(sentA)
-                  sentB = aeda(sentB)
-                  A = aeda(A)
+                    sentA = aeda(sentA)
+                    sentB = aeda(sentB)
+                    A = aeda(A)
                 sentence = A + se + sentA + ob + sentB
 
             if sentence != sent :
@@ -133,3 +119,37 @@ def load_stratified_data_AEDA(dataset_dir):
                 df_train_sen = df_train_sen.append(new_data, ignore_index= True)
                 
     return df_train_sen, df_valid
+
+
+def load_stratified_data(dataset_dir, aug_family = False, type_ent_marker = False, type_punct = False, aug_AEDA = False):
+  """
+  Function: load_stratified_data
+  Definition: 데이터 비율에 맞춰서 validation을 분리
+  Argument: 
+    aug_family: per:children", "per:colleagues", "per:other_family 레이블에 대해서 augmentation
+    type_ent_marker: 입력 문장에 <S:PER> 등의 typed entity을 추가
+    type_punct: type_ent_marker을 적용하되 @ * * @ 등의 punctuation을 적용
+      
+  """
+  """ csv 파일을 경로에 맡게 불러 옵니다. """  
+  split = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
+  pd_dataset = pd.read_csv(dataset_dir)  
+  
+  for train_index, test_index in split.split(pd_dataset, pd_dataset["label"]):
+    strat_train_set = pd_dataset.loc[train_index]
+    strat_dev_set = pd_dataset.loc[test_index]
+
+  if aug_family:
+    strat_train_set = augment_family(strat_train_set)
+
+  if type_ent_marker:
+    strat_train_set['sentence']  = entity_marker(strat_train_set, typed_punct = type_punct)
+    strat_dev_set['sentence'] = entity_marker(strat_dev_set, typed_punct = type_punct)
+
+  train_dataset = preprocessing_dataset(strat_train_set)  
+  dev_dataset = preprocessing_dataset(strat_dev_set)  
+
+  if aug_AEDA :
+    train_dataset, dev_dataset = AEDA(train_dataset, dev_dataset)
+    
+  return train_dataset, dev_dataset

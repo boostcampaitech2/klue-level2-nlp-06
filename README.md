@@ -173,15 +173,20 @@ sentence를 space(' ')기준으로 나눈 후 entity에 해당하는 데이터�
 ```
 
 ### typed entity
-Reference Zhou et al.
+An Improved Baseline for Sentence-level Relation Extraction by Wenxuan Zhou, Muhao Chen
 ```json
 "type_ent_marker" = true
 ```
 
 ### typed punct
-Reference Zhou et al.
+An Improved Baseline for Sentence-level Relation Extraction by Wenxuan Zhou, Muhao Chen
 ```json
 "type_punct" = true
+```
+
+
+    
+    
     
 ## Config Augmenters
 ### Wandb

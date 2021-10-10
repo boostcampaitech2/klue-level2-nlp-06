@@ -478,7 +478,7 @@ def entity_marker(dataset, typed_punct = False):
 
 # AEDA를 사용하기 위한 data load 함수
 def AEDA_augmentation(pd_dataset, df_valid):
-    # 개수가 적은 15개의 label만 따로 빼기
+    # label 개수 하위 15개만 따로 빼서 Augmentation을 진행하기 위해 data 추출
     df_train = pd_dataset[(pd_dataset['label'] == "per:place_of_death") |
                                         (pd_dataset['label'] == "org:number_of_employees/members   ") |
                                         (pd_dataset['label'] == "org:dissolved") |
@@ -500,6 +500,7 @@ def AEDA_augmentation(pd_dataset, df_valid):
         morpheme_analyzer="Mecab", punc_ratio=0.3, punctuations=[".", ",", "!", "?", ";", ":"]
     )
     df_train_sen = copy.deepcopy(pd_dataset)
+    # entity안에 AEDA 적용이 들어가지 않도록 하기 위한 코드 
     for idx, sent in enumerate(df_train['sentence']):
         se = df_train.iloc[idx]['subject_entity']
         se = se.strip()[1:-1]
@@ -523,7 +524,7 @@ def AEDA_augmentation(pd_dataset, df_valid):
                     sentB = aeda(sentB)
                     A = aeda(A)
                 sentence = A + se + sentA + ob + sentB
-
+            # 문장이 맞으면 train set에 생성된 data 추가
             if sentence != sent :
                 new_data = {'id': idx, "sentence" : sentence, 'subject_entity': df_train.iloc[idx]['subject_entity'], 
                             'object_entity' : df_train.iloc[idx]['object_entity'], 'label' : df_train.iloc[idx]['label']}

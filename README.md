@@ -270,11 +270,11 @@ An Improved Baseline for Sentence-level Relation Extraction by Wenxuan Zhou, Muh
 [Korean WordNet](http://wordnet.kaist.ac.kr/)
 
 ## 8. Contributor
-나요한_T2073 : https://github.com/nudago
-백재형_T2102 : https://github.com/BaekTree
-송민재_T2116 : https://github.com/Jjackson-dev
-이호영_T2177 : https://github.com/hylee-250
-정찬미_T2207 : https://github.com/ChanMiJung
-한진_T2237 : https://github.com/wlsl8135/
+나요한_T2073 : https://github.com/nudago  
+백재형_T2102 : https://github.com/BaekTree  
+송민재_T2116 : https://github.com/Jjackson-dev  
+이호영_T2177 : https://github.com/hylee-250  
+정찬미_T2207 : https://github.com/ChanMiJung  
+한진_T2237 : https://github.com/wlsl8135/  
 홍석진_T2243 : https://github.com/HongCu  
 

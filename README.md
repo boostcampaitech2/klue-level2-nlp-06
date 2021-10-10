@@ -27,10 +27,11 @@ RE is a task to identify semantic relations between entity pairs in a text. The 
   
 #### 데이터셋
 - KLUE Dataset의 RE Task데이터로 30개의 관계가 존재하고, 약 32000개의 문장을 학습데이터로 학습한다.
-- No relation(관계없음)의 분포가 x개로 가장 많고 (최소 라벨)의 분포가 x개로 가장 적었다.
+- 관계(label)의 분포는 굉장히 불균형했는데 No relation(관계없음)의 분포가 9534개로 가장 많고 per:place_of_death(사망한 위치)의 분포가 40개로 가장 적었다.
+![](https://i.imgur.com/78fECcx.png)
   
 #### 데이터 전처리 
-- 동일한 문장, entity임에도 라벨이 달랐던 데이터가 존재했고 둘 중 올바른 라벨로 수정하였다.
+- 동일한 문장의 데이터가 42개, 동일하면서도 라벨이 달랐던 데이터가 5개 존재했고 둘 중 올바른 라벨로 수정하였다.
   
 #### 평가지표 
 - 'No relation' 라벨을 제외한 Micro F1-score로 평가하였다. 
@@ -39,20 +40,20 @@ RE is a task to identify semantic relations between entity pairs in a text. The 
 ## Table of Contents
 1. [Prerequisites Installatioin](#prerequisites-installatioin)
 2. [Quick Start](#quick-start)
-3. [Advanced Examples](#advanced-examples)
-4. [Code Structure](#code-structure)
+3. [Best Score Model](#best-score-model)
+4. [Model Architecture](#model-architecture)
 5. [Usage](#usage)
 6. [Augmenters](#augmenters)
 7. [Contributor](#contributor)
     
   
-## Prerequisites Installatioin
+## 1. Prerequisites Installatioin
 requirements.txt can be installed using pip as follows:
 ```shell script
 $ pip install -r requirements.txt
 ```
 
-## Quick Start
+## 2. Quick Start
 - Train
 ```shell script
 python train.py
@@ -62,9 +63,19 @@ python train.py
 python inference.py
 ```   
  
-## Advanced Examples
-change the mode by editing the config.json
-## Usage
+## 3. Best Score Model
+
+- Private Score : 72.681
+- Base Model : RoBERTa-large
+- Hyper parameter are same as for RoBERTa-large
+- [Using Tokenize like BERT](#using-tokenize-like-bert)
+    
+## 4. Model Architecture    
+- KLUE/RoBERTa-large
+
+![](https://i.imgur.com/KqQGOnL.png)
+
+## 5. Usage
 ### Using Focal loss
 
 ```json
@@ -188,7 +199,7 @@ An Improved Baseline for Sentence-level Relation Extraction by Wenxuan Zhou, Muh
     
     
     
-## Config Augmenters
+## 6. Config Augmenters
 ### Wandb
 - RoRERTa-large
 
@@ -254,23 +265,16 @@ An Improved Baseline for Sentence-level Relation Extraction by Wenxuan Zhou, Muh
 | load_best_model_at_end   | bool         | true     |  best checkpoint saving (loss) |
 
 
-## Reference
+## 7. Reference
 [Easy Data Augmentation Paper](https://www.aclweb.org/anthology/D19-1670.pdf)  
 [Korean WordNet](http://wordnet.kaist.ac.kr/)
 
-
-# klue-level2-nlp-06
-klue-level2-nlp-06 created by GitHub Classroom  
-P stage  
-KLUE  
-Relation Extraction  
-
-# Config 기준 파일 저장 위치
-* 최고 성능 모델
-   *  ./best_model/모델이름
-* checkpoint 저장 위치
-   * ./result/모델이름
-* 모델이름은 confog.json에서 wandb의 name의 값으로 주는 값
-* 이 값이 wandb 이름에도 적용 됨.
-* 동일한 이름으로 실험할 때 exp뒤에 숫자 붙여서 업데이트
+## 8. Contributor
+나요한_T2073 : https://github.com/nudago
+백재형_T2102 : https://github.com/BaekTree
+송민재_T2116 : https://github.com/Jjackson-dev
+이호영_T2177 : https://github.com/hylee-250
+정찬미_T2207 : https://github.com/ChanMiJung
+한진_T2237 : https://github.com/wlsl8135/
+홍석진_T2243 : https://github.com/HongCu  
 

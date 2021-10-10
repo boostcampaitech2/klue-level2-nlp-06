@@ -29,7 +29,7 @@ def label_to_num(label):
     num_label.append(dict_label_to_num[v])
   
   return num_label
-def add_special_token(tokenizer, special_token):
+def add_special_token(tokenizer, special_token): #Tokenizer에 Special Token을 추가
   token_dict={
     "none" : [],
     "entity" : ['<obj>', '</obj>', '<subj>', '</subj>'],
@@ -40,7 +40,7 @@ def add_special_token(tokenizer, special_token):
   entity_special_tokens = {'additional_special_tokens': token_dict[special_token]}    
   num_additional_special_tokens=  tokenizer.add_special_tokens(entity_special_tokens)    
   return tokenizer
-def add_special_tokens_to_sentence(sentence, object_entity, subject_entity, source, special_token):
+def add_special_tokens_to_sentence(sentence, object_entity, subject_entity, source, special_token): #문장 내부에 Speical Token을 추가
     obj_start_idx, obj_end_idx = object_entity['start_idx'], object_entity['end_idx']
     subj_start_idx, subj_end_idx = subject_entity['start_idx'], subject_entity['end_idx']    
     obj_type = type_tag_dict[object_entity['type']]
@@ -85,7 +85,7 @@ def add_special_tokens_to_sentence(sentence, object_entity, subject_entity, sour
     else :
       new_sentence= sentence   
     return new_sentence
-def make_info_entity(object_entity, subject_entity, source, type):
+def make_info_entity(object_entity, subject_entity, source, type): #Sentence[SEP]info_entity 의 info_entity를 생성
     obj_start_idx, obj_end_idx = object_entity['start_idx'], object_entity['end_idx']
     subj_start_idx, subj_end_idx = subject_entity['start_idx'], subject_entity['end_idx']  
     obj_type = type_tag_dict[object_entity['type']]

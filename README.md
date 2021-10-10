@@ -5,7 +5,7 @@ BoostCamp AI Tech - [NLP] 문장 내 개체간 관계 추출
     <a href="https://boostcamp.connect.or.kr/program_ai.html">
         <img src="https://img.shields.io/badge/BoostCamp-P--Stage-bronze?logo=Naver&logoColor=white"/></a> &nbsp
     </a>
-    <a href=https://github.com/KLUE-benchmark/KLUE">
+    <a href="https://github.com/KLUE-benchmark/KLUE">
         <img src="https://img.shields.io/badge/Dataset-KLUE--RE-critical?logo=GitHub&logoColor=white"/></a> &nbsp
     </a>
     <a href="https://huggingface.co/klue/roberta-large">
